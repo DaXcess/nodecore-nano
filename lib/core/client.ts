@@ -2,7 +2,7 @@ import { Socket } from 'net';
 import EventEmitter from 'events';
 import * as crypto from '../crypto';
 import { EPayloadLike, PGuid } from '../datatypes/common';
-import Guid from '../datatypes/guid';
+import { Guid } from '../datatypes';
 import { randomBytes } from 'crypto';
 import { PLUGINS } from '../plugins';
 
@@ -10,7 +10,7 @@ import { PLUGINS } from '../plugins';
 export declare interface NodeCoreClient {
     // Main events
     on(event: 'connect', listener: (eventArgs: {hostname: string, port: number}) => void): this;
-    on(event: 'shutdown', listener: (eventArgs: {error: boolean, restart: boolean}) => void): this;
+    on(event: 'shutdown', listener: (eventArgs: {error: boolean, restart: boolean, cancel(): void, isCancelled(): boolean}) => void): this;
     on(event: 'packet', listener: (eventArgs: {packet: crypto.NodeCorePacket, cancel(): void, isCancelled(): boolean}) => void): this;
     on(event: 'plugins', listener: (eventArgs: {plugins: {name: string, size: number, guid: Guid, buildTime: Date}[]}) => void): this
     on(event: 'pipe.pre', listener: (eventArgs: {cancel(): void, isCancelled(): boolean}) => void): this;
@@ -107,6 +107,8 @@ export class NodeCoreClient extends EventEmitter {
     public connect(): void {
         if (this.isConnected) return;
 
+        this.isConnected = true; // Not exactly true but this prevents some race-conditions
+
         this.socket = new Socket();
         this.socket.on('data', this.onDataReceived);
         this.socket.on('error', this.onSocketError);
@@ -119,17 +121,25 @@ export class NodeCoreClient extends EventEmitter {
      * @param error Whether the shutdown was caused by an error
      * @param restart Whether the shutdown was caused by a restart
      */
-    public shutdown(error: boolean = false, restart: boolean = false): void {
-        this.socket.destroy();
+    public shutdown(error: boolean = false, restart: boolean = false): boolean | void {
+        if (!this.isConnected) throw new Error('Cannot shutdown an unopened connection');
 
-        this.emit('shutdown', { error, restart }, false);
+        this.socket.destroy();
+        this.isConnected = false;
+
+        const ret = this.emit('shutdown', { error, restart });
+        if (restart) return !ret; // Tell the restart() function to NOT restart if cancelled
+        
+        if (ret) {
+            setTimeout(this.connect, 1000); // Shutdown event got cancelled, so restart the connection
+        }
     }
 
     /**
      * Restart the connection
      */
     public restart(): void {
-        this.shutdown(false, true);
+        if (!this.shutdown(false, true)) return;
 
         setTimeout(this.connect, 1000);
     }

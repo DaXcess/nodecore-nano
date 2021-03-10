@@ -1,7 +1,7 @@
 {
-  "name": "nodecore-nano",
+  "name": "@rodabafilms/nodecore-nano",
   "version": "1.0.0",
-  "description": "",
+  "description": "NodeJS Client library for communication with NanoCore (v1.2.2.0) servers",
   "main": "build/index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
@@ -16,5 +16,17 @@
     "promise-socket": "^7.0.0",
     "typescript": "^4.2.3",
     "varint": "^6.0.0"
-  }
+  },
+  "directories": {
+    "lib": "lib"
+  },
+  "devDependencies": {},
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/RoDaBaFilms/nodecore-nano.git"
+  },
+  "bugs": {
+    "url": "https://github.com/RoDaBaFilms/nodecore-nano/issues"
+  },
+  "homepage": "https://github.com/RoDaBaFilms/nodecore-nano#readme"
 }

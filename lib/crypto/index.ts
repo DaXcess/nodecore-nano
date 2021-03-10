@@ -3,10 +3,7 @@ import zlib from 'zlib';
 
 import { BinaryWriter, BinaryReader } from "../binary";
 import { byte, char, EPayloadLike, DPayloadLike } from "../datatypes/common";
-import Guid from "../datatypes/guid";
-
-// boolean = 0
-// string = 12
+import { Guid } from "../datatypes";
 
 const TYPES = {
     'byte': 1,
@@ -232,8 +229,9 @@ export function decrypt(byteArray: Buffer): NodeCorePacket {
     let reader = new BinaryReader(buffer);
 
     if (reader.readBoolean()) {
-        const length = reader.readInt32();
+        reader.readInt32();
 
+        // Copy compressed data (begins at offset 5)
         const _tmpBuf = Buffer.alloc(buffer.length - 5);
         buffer.copy(_tmpBuf, 0, 5);
 
@@ -242,6 +240,7 @@ export function decrypt(byteArray: Buffer): NodeCorePacket {
         reader = new BinaryReader(buffer);
     }
 
+    // Initialize packet object
     const packet: NodeCorePacket = {
         LowerCommand: reader.readByte(),
         UpperCommand: reader.readByte(),
@@ -255,75 +254,76 @@ export function decrypt(byteArray: Buffer): NodeCorePacket {
 
     const objectList: DPayloadLike[] = [];
 
+    // Read and parse the supported datatypes
     while (reader.getOffset() != buffer.length) {
         switch (reader.readByte()) {
-            case 0:
+            case 0: // Boolean
                 objectList.push(reader.readBoolean());
                 break;
 
-            case 1:
+            case 1: // Byte
                 objectList.push(reader.readByte());
                 break;
 
-            case 2:
+            case 2: // Byte[]
                 objectList.push(reader.readBytes(reader.readInt32()));
                 break;
 
-            case 3:
+            case 3: // Char
                 objectList.push(String.fromCharCode(reader.readByte()));
                 break;
 
-            case 4:
+            case 4: // Char[]
                 objectList.push(reader.readStringUtf8().split(''));
                 break;
 
-            case 5:
+            case 5: // Decimal
                 // Not implemented
                 reader.readInt64();
                 objectList.push(null);
                 break;
 
-            case 6:
+            case 6: // Double
                 objectList.push(reader.readDouble());
                 break;
                 
-            case 7:
+            case 7: // Int32
                 objectList.push(reader.readInt32());
                 break;
                 
-            case 8:
+            case 8: // Int64
                 objectList.push(reader.readInt64());
                 break;
                 
-            case 9:
+            case 9: // SByte
                 objectList.push(reader.readSByte());
                 break;
                 
-            case 10:
+            case 10: // Int16
                 objectList.push(reader.readInt16());
                 break;
                 
-            case 11:
+            case 11: // Float
                 objectList.push(reader.readFloat());
                 break;
                 
-            case 12:
+            case 12: // String
                 objectList.push(reader.readStringUtf8());
                 break;
                 
-            case 13:
+            case 13: // UInt32
                 objectList.push(reader.readUInt32());
                 break;
                 
-            case 14:
+            case 14: // UInt64
                 objectList.push(reader.readUInt64());
                 break;
                 
-            case 15:
+            case 15: // UInt16
                 objectList.push(reader.readUInt16());
                 break;
                 
-            case 16:
+            case 16: // DateTime
                 try {
                     const dateBytes = reader.readBytes(8);
                     dateBytes[7] = parseInt(dateBytes[7].toString(2).substr(2), 2);
@@ -337,7 +337,7 @@ export function decrypt(byteArray: Buffer): NodeCorePacket {
                 }
                 break;
                 
-            case 17:
+            case 17: // String[]
                 const strArray: string[] = new Array(reader.readInt32());
                 for (var i = 0; i < strArray.length; i++) {
                     strArray[i] = reader.readStringUtf8();
@@ -346,23 +346,23 @@ export function decrypt(byteArray: Buffer): NodeCorePacket {
                 objectList.push(strArray);
                 break;
                 
-            case 18:
+            case 18: // Guid
                 objectList.push(new Guid(...reader.readBytes(16)));
                 break;
                 
-            case 19:
+            case 19: // Size
                 // Not implemented
                 reader.readInt64();
                 objectList.push(null);
                 break;
                 
-            case 20:
+            case 20: // Rectangle
                 // Not implemented
                 reader.readBytes(16);
                 objectList.push(null);
                 break;
                 
-            case 21:
+            case 21: // Version
                 // Not implemented
                 reader.readStringUtf8();
                 objectList.push(null);
