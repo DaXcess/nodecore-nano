@@ -1,5 +1,7 @@
 import varint from 'varint';
 
+// Contrary to the BinaryWriter, this module has actually been written by me
+
 export class BinaryReader {
     private _buffer: Buffer;
     private _offset: number;

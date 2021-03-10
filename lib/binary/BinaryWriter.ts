@@ -1,5 +1,7 @@
 import varint from 'varint';
 
+// Mostly blatant stolen code, except for the prefixed string writes
+
 export class BinaryWriter {
     private _buffer: Buffer;
     private _length: number;

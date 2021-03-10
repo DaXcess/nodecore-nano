@@ -6,7 +6,9 @@ import Guid from '../datatypes/guid';
 import { randomBytes } from 'crypto';
 import { PLUGINS } from '../plugins';
 
+// Typing is nice :>
 export declare interface NodeCoreClient {
+    // Main events
     on(event: 'connect', listener: (eventArgs: {hostname: string, port: number}) => void): this;
     on(event: 'shutdown', listener: (eventArgs: {error: boolean, restart: boolean}) => void): this;
     on(event: 'packet', listener: (eventArgs: {packet: crypto.NodeCorePacket, cancel(): void, isCancelled(): boolean}) => void): this;
@@ -14,6 +16,7 @@ export declare interface NodeCoreClient {
     on(event: 'pipe.pre', listener: (eventArgs: {cancel(): void, isCancelled(): boolean}) => void): this;
     on(event: 'pipe.post', listener: () => void): this;
 
+    // Core Plugin events
     on(event: 'core.update', listener: (eventArgs: {values: {cpu: number, ram: number, idle: number, active: string}, cancel(): void, isCancelled(): boolean}) => void): this;
     on(event: 'core.restart', listener: (eventArgs: {cancel(): void, isCancelled(): boolean}) => void): this;
     on(event: 'core.shutdown', listener: (eventArgs: {cancel(): void, isCancelled(): boolean}) => void): this;
@@ -21,6 +24,7 @@ export declare interface NodeCoreClient {
     on(event: 'core.sysreboot', listener: () => void): this;
     on(event: 'core.sysshutdown', listener: () => void): this;
 
+    // Other unknown / undocumented events
     on(event: string | symbol, listener: Function): this;
 }
 
@@ -48,6 +52,9 @@ interface NanoCoreClientOptions {
     activeWindow: string;
 }
 
+/**
+ * Core class of this library
+ */
 export class NodeCoreClient extends EventEmitter {
     private hostname: string;
     private port: number;
@@ -59,6 +66,9 @@ export class NodeCoreClient extends EventEmitter {
     
     public clientOptions: NanoCoreClientOptions;
 
+    /**
+     * @param opts
+     */
     constructor(opts: NanoCoreClientConstructorOptions) {
         super();
 
@@ -72,6 +82,8 @@ export class NodeCoreClient extends EventEmitter {
             deviceGuid: opts.deviceGuid ?? new Guid(...randomBytes(16)),
             osName: opts.osName ?? "Windows 10 Home",
             filename: opts.filename ?? "RegAsm.exe",
+            
+            // Might remove these in a future commit
             activeAppName: opts.activeAppName ?? 'chrome',
             activeWindow: opts.activeWindow ?? 'YouTube'
         };
@@ -89,7 +101,10 @@ export class NodeCoreClient extends EventEmitter {
         this.sendCommand = this.sendCommand.bind(this);
     }
 
-    public connect() {
+    /**
+     * Initiate a connection with the server
+     */
+    public connect(): void {
         if (this.isConnected) return;
 
         this.socket = new Socket();
@@ -98,13 +113,22 @@ export class NodeCoreClient extends EventEmitter {
         this.socket.connect(this.port, this.hostname, this.onSocketConnect);
     }
     
-    public shutdown(error: boolean = false, restart: boolean = false) {
+    /**
+     * Close the connection
+     * 
+     * @param error Whether the shutdown was caused by an error
+     * @param restart Whether the shutdown was caused by a restart
+     */
+    public shutdown(error: boolean = false, restart: boolean = false): void {
         this.socket.destroy();
 
         this.emit('shutdown', { error, restart }, false);
     }
 
-    public restart() {
+    /**
+     * Restart the connection
+     */
+    public restart(): void {
         this.shutdown(false, true);
 
         setTimeout(this.connect, 1000);
@@ -263,6 +287,9 @@ export class NodeCoreClient extends EventEmitter {
     }
 }
 
+/**
+ * Wrapper classed used for passing the client to plugin handlers
+ */
 export class NodeCorePluginClient {
     constructor(public name: string, public guid: Guid, public client: NodeCoreClient) {
         this.sendCommand = this.sendCommand.bind(this);
@@ -277,3 +304,5 @@ export class NodeCorePluginClient {
         return this.client.emit(`${this.name}.${event}`, arg, cancellable);
     }
 }
+
+// PLEASE STOP I DONT WANT TO SEE LEGO PIECE 26047

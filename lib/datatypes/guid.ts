@@ -1,3 +1,5 @@
+// Very shitty implementation of a Guid but it works ¯\_(ツ)_/¯
+
 export default class Guid {
     public static EMPTY: Guid = new Guid(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
 
