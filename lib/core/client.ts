@@ -395,7 +395,7 @@ export class NodeCoreClient extends NodeCoreBase {
                     };
                 }
 
-                this.emit('plugins', {plugins: this.pluginCache}, false);
+                this.emit('plugins', {plugins: Object.values(this.pluginCache)}, false);
                 this.sendCommand(1, 3, Guid.EMPTY, []);
                 break;
         }
