@@ -1,4 +1,4 @@
-import Guid from "./guid";
+import {Guid} from "./guid";
 
 export class Payload {
     public type: string;

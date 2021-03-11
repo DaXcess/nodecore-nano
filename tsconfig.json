@@ -7,8 +7,7 @@
         "outDir": "build/",
         "lib": ["ES6", "DOM"],
         "esModuleInterop": true,
-        "types": ["node"],
-        "extendedDiagnostics": true
+        "types": ["node"]
     },
     "include": ["lib/**/*"],
     "exclude": ["node_modules", "**/*.spec.ts"]

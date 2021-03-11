@@ -1,10 +1,10 @@
-import { NodeCorePluginClient } from "../core/client";
+import { NodeCoreBase, NodeCorePluginClient } from "../core/client";
 import { DPayloadLike } from "../datatypes/common";
 import * as core from "./core";
 
 interface Plugin {
     name: string,
-    onPacket?: (client: NodeCorePluginClient, pipe: string, payload: DPayloadLike[]) => void
+    onPacket?: (client: NodeCorePluginClient<NodeCoreBase>, pipe: string, payload: DPayloadLike[]) => void
 }
 
 export const PLUGINS: {[key: string]: Plugin} = {
