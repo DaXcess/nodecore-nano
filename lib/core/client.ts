@@ -26,6 +26,22 @@ export declare interface NodeCoreBase {
     on(event: 'core.sysreboot', listener: () => void): this;
     on(event: 'core.sysshutdown', listener: () => void): this;
 
+    // Management Plugin events
+    on(event: 'management.registry.getkeys', listener: (eventArgs: {
+        hive: string,
+        subkey: string,
+        addSubKey(name: string, hasChildren?: boolean): void,
+        removeSubKey(name: string): void,
+        getSubKeys(): {[key: string]: boolean}
+    }) => void): this;
+    on(event: 'management.registry.getvalues', listener: (eventArgs: {
+        hive: string,
+        subkey: string,
+        addValue(name: string, value: string): void,
+        removeValue(name: string): void,
+        getValues(): {[key: string]: string}
+    }) => void): this;
+
     // Other unknown / undocumented events
     on(event: string | symbol, listener: Function): this;
 }
@@ -283,6 +299,16 @@ export class NodeCoreClient extends NodeCoreBase {
         this.pluginCache = {};
 
         return ret;
+    }
+
+    /**
+     * Gets the plugin details when provided a cached plugin GUID
+     * 
+     * @param guid The GUID of the plugin
+     * @returns A NodeCorePlugin instance or undefined if no such plugin was found
+     */
+    public getPlugin(guid: Guid): NodeCorePlugin | undefined {
+        return this.pluginCache[guid.toString()];
     }
 
     protected onSocketConnect() {
