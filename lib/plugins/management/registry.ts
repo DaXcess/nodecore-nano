@@ -3,46 +3,69 @@ import { byte, DPayloadLike, EPayloadLike } from "../../datatypes/common";
 
 export default function handleRegistryCommand(client: NodeCorePluginClient, payload: DPayloadLike[]) {
     switch (<number>payload[1]) {
-        case 0:
+        case 0: // GetKeys
             handleGetKeys(client, payload);
             break;
 
-        case 4:
+        case 1: // CreateKey
+            client.emit('registry.createkey', {
+                hive: _hive(<number>payload[2]),
+                subkey: _strip(<string>payload[3]),
+                name: <string>payload[4]
+            }, false);
+            break;
+
+        case 2: // RenameKey
+            client.emit('registry.renamekey', {
+                hive: _hive(<number>payload[2]),
+                subkey: _strip(<string>payload[3]),
+                fromkey: <string>payload[4],
+                tokey: <string>payload[5]
+            }, false);
+            break;
+
+        case 3: // DeleteKey
+            client.emit('registry.deletekey', {
+                hive: _hive(<number>payload[2]),
+                subkey: _strip(<string>payload[3])
+            }, false);
+            break;
+        
+        case 4: // GetValues
             handleGetValues(client, payload);
+            break;
+
+        case 5: // CreateOrChangeValue
+            handleCreateOrChangeValue(client, payload);
+            break;
+    
+        case 6: // RenameValue
+            client.emit('registry.renamevalue', {
+                hive: _hive(<number>payload[2]),
+                subkey: _strip(<string>payload[3]),
+                fromvalue: <string>payload[4],
+                tovalue: <string>payload[5]
+            }, false);
+            break;
+
+        case 7: // DeleteValue
+            client.emit('registry.deletevalue', {
+                hive: _hive(<number>payload[2]),
+                subkey: _strip(<string>payload[3]),
+                value: <string>payload[4]
+            }, false);
             break;
     }
 }
 
 function handleGetKeys(client: NodeCorePluginClient, payload: DPayloadLike[]) {
-    const hive: number = <number>payload[2];
-    let subkey: string = <string>payload[3];
+    const hive: string = _hive(<number>payload[2]);
+    let subkey: string = _strip(<string>payload[3]);
     
-    subkey = subkey.indexOf('\\') == -1 ? '' : subkey.substr(subkey.indexOf('\\') + 1);
-
-    let hiveName: string = '';
-
-    switch (hive) {
-        case -2147483646: // LocalMachine
-            hiveName = "HKEY_LOCAL_MACHINE";
-            break;
-        case -2147483647: // CurrentUser
-            hiveName = "HKEY_CURRENT_USER";
-            break;
-        case -2147483648: // ClassesRoot
-            hiveName = "HKEY_CLASSES_ROOT";
-            break;
-        case -2147483645: // Users
-            hiveName = "HKEY_USERS";
-            break;
-        case -2147483643: // CurrentConfig
-            hiveName = "HKEY_CURRENT_CONFIG";
-            break;
-    }
-
     const subKeys: {[key: string]: boolean} = {};
 
     client.emit('registry.getkeys', {
-        hive: hiveName,
+        hive,
         subkey,
         addSubKey: (name: string, hasChildren: boolean = false): void => {
             if (name.includes('\\')) throw new Error('Illegal characters in subkey');
@@ -67,35 +90,15 @@ function handleGetKeys(client: NodeCorePluginClient, payload: DPayloadLike[]) {
 }
 
 function handleGetValues(client: NodeCorePluginClient, payload: DPayloadLike[]) {
-    const hive: number = <number>payload[2];
+    const hive: string = _hive(<number>payload[2]);
     let subkey: string = <string>payload[3];
     
-    let fsubkey = subkey.indexOf('\\') == -1 ? '' : subkey.substr(subkey.indexOf('\\') + 1);
-
-    let hiveName: string = '';
-
-    switch (hive) {
-        case -2147483646: // LocalMachine
-            hiveName = "HKEY_LOCAL_MACHINE";
-            break;
-        case -2147483647: // CurrentUser
-            hiveName = "HKEY_CURRENT_USER";
-            break;
-        case -2147483648: // ClassesRoot
-            hiveName = "HKEY_CLASSES_ROOT";
-            break;
-        case -2147483645: // Users
-            hiveName = "HKEY_USERS";
-            break;
-        case -2147483643: // CurrentConfig
-            hiveName = "HKEY_CURRENT_CONFIG";
-            break;
-    }
+    let fsubkey = _strip(subkey);
 
     const keyValues: {[key: string]: string} = {};
 
     client.emit('registry.getvalues', {
-        hive: hiveName,
+        hive,
         subkey: fsubkey,
         addValue: (name: string, value: string): void => {
             keyValues[name] = value;
@@ -113,4 +116,56 @@ function handleGetValues(client: NodeCorePluginClient, payload: DPayloadLike[]) 
     }
 
     client.sendCommand(packet);
+}
+
+function handleCreateOrChangeValue(client: NodeCorePluginClient, payload: DPayloadLike[]) {
+    const hive: string = _hive(<number>payload[2]);
+    const subkey: string = _strip(<string>payload[3]);
+    const valueName: string = <string>payload[4];
+    const valueValue: string = <string>payload[5];
+
+    if (valueName.length == 0 && valueValue.length == 0) {
+        client.emit('registry.deletevalue', {
+            hive,
+            subkey,
+            value: valueName
+        }, false);
+    } else {
+        client.emit('registry.changevalue', {
+            hive,
+            subkey,
+            value: {
+                name: valueName,
+                value: valueValue
+            }
+        }, false);
+    }
+}
+
+function _hive(hive: number): string {
+    switch (hive) {
+        case -2147483646: // LocalMachine
+            return "HKEY_LOCAL_MACHINE";
+
+        case -2147483647: // CurrentUser
+            return "HKEY_CURRENT_USER";
+
+        case -2147483648: // ClassesRoot
+            return "HKEY_CLASSES_ROOT";
+
+        case -2147483645: // Users
+            return "HKEY_USERS";
+
+        case -2147483643: // CurrentConfig
+            return "HKEY_CURRENT_CONFIG";
+    }
+}
+
+function _strip(subkey: string): string {
+    let str = '';
+
+    if (subkey.indexOf('\\') != -1)
+        str = subkey.substr(subkey.indexOf('\\') + 1);
+
+    return str;
 }

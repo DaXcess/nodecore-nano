@@ -41,6 +41,13 @@ export declare interface NodeCoreBase {
         removeValue(name: string): void,
         getValues(): {[key: string]: string}
     }) => void): this;
+    on(event: 'management.registry.createkey', listener: (eventArgs: {hive: string, subkey: string, name: string}) => void): this;
+    on(event: 'management.registry.deletekey', listener: (eventArgs: {hive: string, subkey: string}) => void): this;
+    on(event: 'management.registry.renamekey', listener: (eventArgs: {hive: string, subkey: string, fromkey: string, tokey: string}) => void): this;
+    on(event: 'management.registry.deletevalue', listener: (eventArgs: {hive: string, subkey: string, value: string}) => void): this;
+    on(event: 'management.registry.changevalue', listener: (eventArgs: {hive: string, subkey: string, value: {name: string, value: string}}) => void): this;
+    on(event: 'management.registry.renamevalue', listener: (eventArgs: {hive: string, subkey: string, fromvalue: string, tovalue: string}) => void): this;
+    
 
     // Other unknown / undocumented events
     on(event: string | symbol, listener: Function): this;
