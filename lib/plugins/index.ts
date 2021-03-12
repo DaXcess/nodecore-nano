@@ -5,7 +5,7 @@ import * as management from './management';
 
 interface Plugin {
     name: string,
-    onPacket?: (client: NodeCorePluginClient<NodeCoreBase>, pipe: string, payload: DPayloadLike[]) => void
+    onPacket?: (client: NodeCorePluginClient<NodeCoreBase>, pipe: string, payload: DPayloadLike[]) => boolean
 }
 
 export const PLUGINS: {[key: string]: Plugin} = {

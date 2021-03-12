@@ -6,7 +6,7 @@ import { Guid } from '../datatypes';
 import { randomBytes } from 'crypto';
 import { PLUGINS } from '../plugins';
 
-// Typing is nice :>
+// 'on' typings
 export declare interface NodeCoreBase {
     // Main events
     on(event: 'connect', listener: (eventArgs: {hostname: string, port: number}) => void): this;
@@ -19,6 +19,7 @@ export declare interface NodeCoreBase {
     on(event: 'pipe.dead', listener: (eventArgs: {name: string, guid: Guid, plugin: Guid, error: boolean}) => void): this;
 
     // Core Plugin events
+    on(event: 'core.initialize', listener: (eventArgs: {values: {osName: string, filename: string, isAdmin: boolean}, cancel(): void, isCancelled(): boolean}) => void): this;
     on(event: 'core.update', listener: (eventArgs: {values: {cpu: number, ram: number, idle: number, active: string}, cancel(): void, isCancelled(): boolean}) => void): this;
     on(event: 'core.restart', listener: (eventArgs: {cancel(): void, isCancelled(): boolean}) => void): this;
     on(event: 'core.shutdown', listener: (eventArgs: {cancel(): void, isCancelled(): boolean}) => void): this;
@@ -47,10 +48,103 @@ export declare interface NodeCoreBase {
     on(event: 'management.registry.deletevalue', listener: (eventArgs: {hive: string, subkey: string, value: string}) => void): this;
     on(event: 'management.registry.changevalue', listener: (eventArgs: {hive: string, subkey: string, value: {name: string, value: string}}) => void): this;
     on(event: 'management.registry.renamevalue', listener: (eventArgs: {hive: string, subkey: string, fromvalue: string, tovalue: string}) => void): this;
-    
 
     // Other unknown / undocumented events
     on(event: string | symbol, listener: Function): this;
+}
+
+// 'once' typings
+export declare interface NodeCoreBase {
+    // Main events
+    once(event: 'connect', listener: (eventArgs: {hostname: string, port: number}) => void): this;
+    once(event: 'shutdown', listener: (eventArgs: {error: boolean, restart: boolean, cancel(): void, isCancelled(): boolean}) => void): this;
+    once(event: 'packet', listener: (eventArgs: {packet: crypto.NodeCorePacket, cancel(): void, isCancelled(): boolean}) => void): this;
+    once(event: 'packet.unhandled', listener: (eventArgs: {client: NodeCoreBase, packet: crypto.NodeCorePacket}) => void): this;
+    once(event: 'plugins', listener: (eventArgs: {plugins: NodeCorePlugin[]}) => void): this
+    once(event: 'pipe.pre', listener: (eventArgs: {name: string, guid: Guid, plugin: Guid, cancel(): void, isCancelled(): boolean}) => void): this;
+    once(event: 'pipe.post', listener: (eventArgs: {pipe: NodeCorePipe}) => void): this;
+    once(event: 'pipe.dead', listener: (eventArgs: {name: string, guid: Guid, plugin: Guid, error: boolean}) => void): this;
+
+    // Core Plugin events
+    once(event: 'core.initialize', listener: (eventArgs: {values: {osName: string, filename: string}, cancel(): void, isCancelled(): boolean}) => void): this;
+    once(event: 'core.update', listener: (eventArgs: {values: {cpu: number, ram: number, idle: number, active: string}, cancel(): void, isCancelled(): boolean}) => void): this;
+    once(event: 'core.restart', listener: (eventArgs: {cancel(): void, isCancelled(): boolean}) => void): this;
+    once(event: 'core.shutdown', listener: (eventArgs: {cancel(): void, isCancelled(): boolean}) => void): this;
+    once(event: 'core.uninstall', listener: (eventArgs: {cancel(): void, isCancelled(): boolean}) => void): this;
+    once(event: 'core.sysreboot', listener: () => void): this;
+    once(event: 'core.sysshutdown', listener: () => void): this;
+
+    // Management Plugin events
+    once(event: 'management.registry.getkeys', listener: (eventArgs: {
+        hive: string,
+        subkey: string,
+        addSubKey(name: string, hasChildren?: boolean): void,
+        removeSubKey(name: string): void,
+        getSubKeys(): {[key: string]: boolean}
+    }) => void): this;
+    once(event: 'management.registry.getvalues', listener: (eventArgs: {
+        hive: string,
+        subkey: string,
+        addValue(name: string, value: string): void,
+        removeValue(name: string): void,
+        getValues(): {[key: string]: string}
+    }) => void): this;
+    once(event: 'management.registry.createkey', listener: (eventArgs: {hive: string, subkey: string, name: string}) => void): this;
+    once(event: 'management.registry.deletekey', listener: (eventArgs: {hive: string, subkey: string}) => void): this;
+    once(event: 'management.registry.renamekey', listener: (eventArgs: {hive: string, subkey: string, fromkey: string, tokey: string}) => void): this;
+    once(event: 'management.registry.deletevalue', listener: (eventArgs: {hive: string, subkey: string, value: string}) => void): this;
+    once(event: 'management.registry.changevalue', listener: (eventArgs: {hive: string, subkey: string, value: {name: string, value: string}}) => void): this;
+    once(event: 'management.registry.renamevalue', listener: (eventArgs: {hive: string, subkey: string, fromvalue: string, tovalue: string}) => void): this;
+
+    // Other unknown / undocumented events
+    once(event: string | symbol, listener: Function): this;
+}
+
+// 'off' typings
+export declare interface NodeCoreBase {
+    // Main events
+    off(event: 'connect', listener: (eventArgs: {hostname: string, port: number}) => void): this;
+    off(event: 'shutdown', listener: (eventArgs: {error: boolean, restart: boolean, cancel(): void, isCancelled(): boolean}) => void): this;
+    off(event: 'packet', listener: (eventArgs: {packet: crypto.NodeCorePacket, cancel(): void, isCancelled(): boolean}) => void): this;
+    off(event: 'packet.unhandled', listener: (eventArgs: {client: NodeCoreBase, packet: crypto.NodeCorePacket}) => void): this;
+    off(event: 'plugins', listener: (eventArgs: {plugins: NodeCorePlugin[]}) => void): this
+    off(event: 'pipe.pre', listener: (eventArgs: {name: string, guid: Guid, plugin: Guid, cancel(): void, isCancelled(): boolean}) => void): this;
+    off(event: 'pipe.post', listener: (eventArgs: {pipe: NodeCorePipe}) => void): this;
+    off(event: 'pipe.dead', listener: (eventArgs: {name: string, guid: Guid, plugin: Guid, error: boolean}) => void): this;
+
+    // Core Plugin events
+    off(event: 'core.initialize', listener: (eventArgs: {values: {osName: string, filename: string}, cancel(): void, isCancelled(): boolean}) => void): this;
+    off(event: 'core.update', listener: (eventArgs: {values: {cpu: number, ram: number, idle: number, active: string}, cancel(): void, isCancelled(): boolean}) => void): this;
+    off(event: 'core.restart', listener: (eventArgs: {cancel(): void, isCancelled(): boolean}) => void): this;
+    off(event: 'core.shutdown', listener: (eventArgs: {cancel(): void, isCancelled(): boolean}) => void): this;
+    off(event: 'core.uninstall', listener: (eventArgs: {cancel(): void, isCancelled(): boolean}) => void): this;
+    off(event: 'core.sysreboot', listener: () => void): this;
+    off(event: 'core.sysshutdown', listener: () => void): this;
+
+    // Management Plugin events
+    off(event: 'management.registry.getkeys', listener: (eventArgs: {
+        hive: string,
+        subkey: string,
+        addSubKey(name: string, hasChildren?: boolean): void,
+        removeSubKey(name: string): void,
+        getSubKeys(): {[key: string]: boolean}
+    }) => void): this;
+    off(event: 'management.registry.getvalues', listener: (eventArgs: {
+        hive: string,
+        subkey: string,
+        addValue(name: string, value: string): void,
+        removeValue(name: string): void,
+        getValues(): {[key: string]: string}
+    }) => void): this;
+    off(event: 'management.registry.createkey', listener: (eventArgs: {hive: string, subkey: string, name: string}) => void): this;
+    off(event: 'management.registry.deletekey', listener: (eventArgs: {hive: string, subkey: string}) => void): this;
+    off(event: 'management.registry.renamekey', listener: (eventArgs: {hive: string, subkey: string, fromkey: string, tokey: string}) => void): this;
+    off(event: 'management.registry.deletevalue', listener: (eventArgs: {hive: string, subkey: string, value: string}) => void): this;
+    off(event: 'management.registry.changevalue', listener: (eventArgs: {hive: string, subkey: string, value: {name: string, value: string}}) => void): this;
+    off(event: 'management.registry.renamevalue', listener: (eventArgs: {hive: string, subkey: string, fromvalue: string, tovalue: string}) => void): this;
+
+    // Other unknown / undocumented events
+    off(event: string | symbol, listener: Function): this;
 }
 
 interface NodeCoreClientConstructorOptions {
@@ -60,10 +154,6 @@ interface NodeCoreClientConstructorOptions {
     deviceName?: string;
     deviceGuid?: Guid;
     groupName?: string;
-    osName?: string;
-    filename?: string;
-    activeAppName?: string;
-    activeWindow?: string;
 }
 
 interface NodeCorePipeConstructorOptions {
@@ -81,10 +171,6 @@ interface NodeCoreClientOptions {
     deviceName: string;
     deviceGuid: Guid;
     groupName: string;
-    osName: string;
-    filename: string;
-    activeAppName: string;
-    activeWindow: string;
 }
 
 interface NodeCorePlugin {
@@ -266,13 +352,7 @@ export class NodeCoreClient extends NodeCoreBase {
             username: opts.username ?? "John",
             deviceName: opts.deviceName ?? "JOHN-PC",
             groupName: opts.groupName ?? "Default",
-            deviceGuid: opts.deviceGuid ?? new Guid(...randomBytes(16)),
-            osName: opts.osName ?? "Windows 10 Home",
-            filename: opts.filename ?? "RegAsm.exe",
-            
-            // Might remove these in a future commit
-            activeAppName: opts.activeAppName ?? 'chrome',
-            activeWindow: opts.activeWindow ?? 'YouTube'
+            deviceGuid: opts.deviceGuid ?? new Guid(...randomBytes(16))
         };
 
         this.connect = this.connect.bind(this);
@@ -392,7 +472,9 @@ export class NodeCoreClient extends NodeCoreBase {
                     break;
                 }
 
-                plugin.onPacket(new NodeCorePluginClient<NodeCoreClient>(plugin.name, packet.Guid, this), null, packet.Payload);
+                if (!plugin.onPacket(new NodeCorePluginClient<NodeCoreClient>(plugin.name, packet.Guid, this), null, packet.Payload))
+                    this.emit('packet.unhandled', {client: this, packet}, false);
+
                 break;
 
             case 6:
@@ -483,7 +565,8 @@ export class NodeCorePipe extends NodeCoreBase {
             return;
         }
 
-        plugin.onPacket(new NodeCorePluginClient<NodeCorePipe>(plugin.name, this.plugin, this), this.name, packet.Payload);
+        if (!plugin.onPacket(new NodeCorePluginClient<NodeCorePipe>(plugin.name, this.plugin, this), this.name, packet.Payload))
+            this.parent.emit('packet.unhandled', {client: this, packet}, false);
     }
 
     public emit(event: string | symbol, arg: object, cancellable: boolean = true): boolean {

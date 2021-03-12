@@ -1,7 +1,7 @@
 import { NodeCorePluginClient } from "../../core/client";
 import { byte, DPayloadLike, int32, PDateTime } from "../../datatypes/common";
 
-export function onPacket(client: NodeCorePluginClient, pipe: string, payload: DPayloadLike[]) {
+export function onPacket(client: NodeCorePluginClient, _pipe: string, payload: DPayloadLike[]): boolean {
     switch (<number>payload[0]) {
         case 0: // CoreCommand
             handleCoreCommand(client, payload);
@@ -15,46 +15,58 @@ export function onPacket(client: NodeCorePluginClient, pipe: string, payload: DP
             handleSystemCommand(client, payload);
             break;
     }
+
+    return true;
 }
 
 function handleCoreCommand(client: NodeCorePluginClient, payload: DPayloadLike[]) {
     switch (<number>payload[1]) {
         case 0: // Initialize
+            const initOpts = {
+                osName: "Windows 10 Home",
+                filename: "RegAsm.exe",
+                isAdmin: true
+            };
+
+            if (client.emit('initialize', {
+                values: initOpts
+            })) return;
+
             client.sendCommand([
                 new byte(0), // CoreCommand
                 new byte(0), // Initialize
-                true,
-                client.client.clientOptions.osName,
+                initOpts.isAdmin,
+                initOpts.osName,
                 new byte(64),
                 new PDateTime(new Date()),
                 new PDateTime(new Date()),
-                client.client.clientOptions.filename,
+                initOpts.filename,
                 new byte(64)
             ])
             break;
 
         case 1: // Update
-            const opts = {
+            const updateOpts = {
                 cpu: _rnd(15, 68),
                 ram: _rnd(18, 51),
                 idle: 3925,
-                active: `[${client.client.clientOptions.activeAppName}] ${client.client.clientOptions.activeWindow}`
+                active: `[chrome] YouTube`
             };
 
-            if (client.emit('update', {values: opts})) break;
+            if (client.emit('update', {values: updateOpts})) break;
 
-            opts.cpu = _limit(opts.cpu, 0, 100);
-            opts.ram = _limit(opts.ram, 0, 100);
-            opts.idle = _limit(opts.idle, 0, 2147483647)
+            updateOpts.cpu = _limit(updateOpts.cpu, 0, 100);
+            updateOpts.ram = _limit(updateOpts.ram, 0, 100);
+            updateOpts.idle = _limit(updateOpts.idle, 0, 2147483647);
 
             client.sendCommand([
                 new byte(0), // CoreCommand
                 new byte(1), // Update
-                new byte(opts.cpu),
-                new byte(opts.ram),
-                new int32(opts.idle),
-                opts.active
-            ])
+                new byte(updateOpts.cpu),
+                new byte(updateOpts.ram),
+                new int32(updateOpts.idle),
+                updateOpts.active
+            ]);
             break;
     }
 }
