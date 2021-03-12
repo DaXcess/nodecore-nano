@@ -4,23 +4,22 @@
   "description": "NodeJS Client library for communication with NanoCore (v1.2.2.0) servers",
   "main": "build/index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "tsc && node ."
   },
   "keywords": [],
   "author": "RoDaBaFilms",
   "license": "ISC",
   "dependencies": {
+    "varint": "^6.0.0"
+  },
+  "devDependencies": {
     "@types/node": "^14.14.32",
     "@types/varint": "^6.0.0",
-    "promise-socket": "^7.0.0",
-    "typescript": "^4.2.3",
-    "varint": "^6.0.0"
+    "typescript": "^4.2.3"
   },
   "directories": {
     "lib": "lib"
   },
-  "devDependencies": {},
   "repository": {
     "type": "git",
     "url": "git+https://github.com/RoDaBaFilms/nodecore-nano.git"
