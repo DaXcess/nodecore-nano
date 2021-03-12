@@ -1,5 +1,7 @@
 # NodeCore-Nano
 A client library used to interface with NanoCore 1.2.2.0 servers
+| NOTE: This library is in early development, many features are still missing |
+| --- |
 
 ## Installation
 Use npm to install the library
