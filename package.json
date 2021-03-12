@@ -1,6 +1,6 @@
 {
   "name": "@rodabafilms/nodecore-nano",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "NodeJS Client library for communication with NanoCore (v1.2.2.0) servers",
   "main": "build/index.js",
   "scripts": {
