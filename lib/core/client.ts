@@ -103,48 +103,48 @@ export declare interface NodeCoreBase {
 // 'off' typings
 export declare interface NodeCoreBase {
     // Main events
-    off(event: 'connect', listener: (eventArgs: {hostname: string, port: number}) => void): this;
-    off(event: 'shutdown', listener: (eventArgs: {error: boolean, restart: boolean, cancel(): void, isCancelled(): boolean}) => void): this;
-    off(event: 'packet', listener: (eventArgs: {client: NodeCoreBase, packet: crypto.NodeCorePacket, cancel(): void, isCancelled(): boolean}) => void): this;
-    off(event: 'packet.unhandled', listener: (eventArgs: {client: NodeCoreBase, packet: crypto.NodeCorePacket}) => void): this;
-    off(event: 'plugins', listener: (eventArgs: {plugins: NodeCorePlugin[]}) => void): this
-    off(event: 'pipe.pre', listener: (eventArgs: {name: string, guid: Guid, plugin: Guid, cancel(): void, isCancelled(): boolean}) => void): this;
-    off(event: 'pipe.post', listener: (eventArgs: {pipe: NodeCorePipe}) => void): this;
-    off(event: 'pipe.dead', listener: (eventArgs: {name: string, guid: Guid, plugin: Guid, error: boolean}) => void): this;
+    off(event: 'connect', listener?: (eventArgs: {hostname: string, port: number}) => void): this;
+    off(event: 'shutdown', listener?: (eventArgs: {error: boolean, restart: boolean, cancel(): void, isCancelled(): boolean}) => void): this;
+    off(event: 'packet', listener?: (eventArgs: {client: NodeCoreBase, packet: crypto.NodeCorePacket, cancel(): void, isCancelled(): boolean}) => void): this;
+    off(event: 'packet.unhandled', listener?: (eventArgs: {client: NodeCoreBase, packet: crypto.NodeCorePacket}) => void): this;
+    off(event: 'plugins', listener?: (eventArgs: {plugins: NodeCorePlugin[]}) => void): this
+    off(event: 'pipe.pre', listener?: (eventArgs: {name: string, guid: Guid, plugin: Guid, cancel(): void, isCancelled(): boolean}) => void): this;
+    off(event: 'pipe.post', listener?: (eventArgs: {pipe: NodeCorePipe}) => void): this;
+    off(event: 'pipe.dead', listener?: (eventArgs: {name: string, guid: Guid, plugin: Guid, error: boolean}) => void): this;
 
     // Core Plugin events
-    off(event: 'core.initialize', listener: (eventArgs: {values: {osName: string, filename: string}, cancel(): void, isCancelled(): boolean}) => void): this;
-    off(event: 'core.update', listener: (eventArgs: {values: {cpu: number, ram: number, idle: number, active: string}, cancel(): void, isCancelled(): boolean}) => void): this;
-    off(event: 'core.restart', listener: (eventArgs: {cancel(): void, isCancelled(): boolean}) => void): this;
-    off(event: 'core.shutdown', listener: (eventArgs: {cancel(): void, isCancelled(): boolean}) => void): this;
-    off(event: 'core.uninstall', listener: (eventArgs: {cancel(): void, isCancelled(): boolean}) => void): this;
-    off(event: 'core.sysreboot', listener: () => void): this;
-    off(event: 'core.sysshutdown', listener: () => void): this;
+    off(event: 'core.initialize', listener?: (eventArgs: {values: {osName: string, filename: string}, cancel(): void, isCancelled(): boolean}) => void): this;
+    off(event: 'core.update', listener?: (eventArgs: {values: {cpu: number, ram: number, idle: number, active: string}, cancel(): void, isCancelled(): boolean}) => void): this;
+    off(event: 'core.restart', listener?: (eventArgs: {cancel(): void, isCancelled(): boolean}) => void): this;
+    off(event: 'core.shutdown', listener?: (eventArgs: {cancel(): void, isCancelled(): boolean}) => void): this;
+    off(event: 'core.uninstall', listener?: (eventArgs: {cancel(): void, isCancelled(): boolean}) => void): this;
+    off(event: 'core.sysreboot', listener?: () => void): this;
+    off(event: 'core.sysshutdown', listener?: () => void): this;
 
     // Management Plugin events
-    off(event: 'management.registry.getkeys', listener: (eventArgs: {
+    off(event: 'management.registry.getkeys', listener?: (eventArgs: {
         hive: string,
         subkey: string,
         addSubKey(name: string, hasChildren?: boolean): void,
         removeSubKey(name: string): void,
         getSubKeys(): {[key: string]: boolean}
     }) => void): this;
-    off(event: 'management.registry.getvalues', listener: (eventArgs: {
+    off(event: 'management.registry.getvalues', listener?: (eventArgs: {
         hive: string,
         subkey: string,
         addValue(name: string, value: string): void,
         removeValue(name: string): void,
         getValues(): {[key: string]: string}
     }) => void): this;
-    off(event: 'management.registry.createkey', listener: (eventArgs: {hive: string, subkey: string, name: string}) => void): this;
-    off(event: 'management.registry.deletekey', listener: (eventArgs: {hive: string, subkey: string}) => void): this;
-    off(event: 'management.registry.renamekey', listener: (eventArgs: {hive: string, subkey: string, fromkey: string, tokey: string}) => void): this;
-    off(event: 'management.registry.deletevalue', listener: (eventArgs: {hive: string, subkey: string, value: string}) => void): this;
-    off(event: 'management.registry.changevalue', listener: (eventArgs: {hive: string, subkey: string, value: {name: string, value: string}}) => void): this;
-    off(event: 'management.registry.renamevalue', listener: (eventArgs: {hive: string, subkey: string, fromvalue: string, tovalue: string}) => void): this;
+    off(event: 'management.registry.createkey', listener?: (eventArgs: {hive: string, subkey: string, name: string}) => void): this;
+    off(event: 'management.registry.deletekey', listener?: (eventArgs: {hive: string, subkey: string}) => void): this;
+    off(event: 'management.registry.renamekey', listener?: (eventArgs: {hive: string, subkey: string, fromkey: string, tokey: string}) => void): this;
+    off(event: 'management.registry.deletevalue', listener?: (eventArgs: {hive: string, subkey: string, value: string}) => void): this;
+    off(event: 'management.registry.changevalue', listener?: (eventArgs: {hive: string, subkey: string, value: {name: string, value: string}}) => void): this;
+    off(event: 'management.registry.renamevalue', listener?: (eventArgs: {hive: string, subkey: string, fromvalue: string, tovalue: string}) => void): this;
 
     // Other unknown / undocumented events
-    off(event: string | symbol, listener: Function): this;
+    off(event: string | symbol, listener?: Function): this;
 }
 
 interface NodeCoreClientConstructorOptions {
@@ -196,6 +196,7 @@ export class NodeCoreBase extends EventEmitter {
         this.shutdown = this.shutdown.bind(this);
         this.restart = this.restart.bind(this);
         this.sendCommand = this.sendCommand.bind(this);
+        this.off = this.off.bind(this);
 
         this.onDataReceived = this.onDataReceived.bind(this);
         this.onSocketError = this.onSocketError.bind(this);
@@ -333,6 +334,13 @@ export class NodeCoreBase extends EventEmitter {
         }
 
         return cancellable && cancelled;
+    }
+
+    public off(event: string | symbol, listener?: (...args: any[]) => void): this {
+        if (event === '*') event = undefined;
+
+        if (listener) return super.off(event, listener);
+        else return super.removeAllListeners(event);
     }
 }
 

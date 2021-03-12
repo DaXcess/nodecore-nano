@@ -21,8 +21,7 @@
     "lib": "lib"
   },
   "repository": {
-    "type": "git",
-    "url": "git+https://github.com/RoDaBaFilms/nodecore-nano.git"
+    "url": "https://github.com/RoDaBaFilms/nodecore-nano.git"
   },
   "bugs": {
     "url": "https://github.com/RoDaBaFilms/nodecore-nano/issues"
