@@ -21,6 +21,26 @@ Use npm install with the path to your cloned directory
 npm install <path-to-nodecore-nano>
 ```
 
+# Usage
+```js
+const { NodeCoreClient } = require('@rodabafilms/nodecore-nano');
+
+const client = new NodeCoreClient({
+    hostname: '127.0.0.1',
+    port: 1604
+});
+
+// Add event handlers here
+
+// Example event: Reconnect on socket error
+client.on('shutdown', e => {
+    if (e.error) {
+        e.cancel(); 
+    }
+});
+
+client.connect();
+```
 
 ## License
 [GNU General Public License v3.0](https://choosealicense.com/licenses/gpl-3.0/)

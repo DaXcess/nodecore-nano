@@ -11,7 +11,7 @@ export declare interface NodeCoreBase {
     // Main events
     on(event: 'connect', listener: (eventArgs: {hostname: string, port: number}) => void): this;
     on(event: 'shutdown', listener: (eventArgs: {error: boolean, restart: boolean, cancel(): void, isCancelled(): boolean}) => void): this;
-    on(event: 'packet', listener: (eventArgs: {packet: crypto.NodeCorePacket, cancel(): void, isCancelled(): boolean}) => void): this;
+    on(event: 'packet', listener: (eventArgs: {client: NodeCoreBase, packet: crypto.NodeCorePacket, cancel(): void, isCancelled(): boolean}) => void): this;
     on(event: 'packet.unhandled', listener: (eventArgs: {client: NodeCoreBase, packet: crypto.NodeCorePacket}) => void): this;
     on(event: 'plugins', listener: (eventArgs: {plugins: NodeCorePlugin[]}) => void): this
     on(event: 'pipe.pre', listener: (eventArgs: {name: string, guid: Guid, plugin: Guid, cancel(): void, isCancelled(): boolean}) => void): this;
@@ -58,7 +58,7 @@ export declare interface NodeCoreBase {
     // Main events
     once(event: 'connect', listener: (eventArgs: {hostname: string, port: number}) => void): this;
     once(event: 'shutdown', listener: (eventArgs: {error: boolean, restart: boolean, cancel(): void, isCancelled(): boolean}) => void): this;
-    once(event: 'packet', listener: (eventArgs: {packet: crypto.NodeCorePacket, cancel(): void, isCancelled(): boolean}) => void): this;
+    once(event: 'packet', listener: (eventArgs: {client: NodeCoreBase, packet: crypto.NodeCorePacket, cancel(): void, isCancelled(): boolean}) => void): this;
     once(event: 'packet.unhandled', listener: (eventArgs: {client: NodeCoreBase, packet: crypto.NodeCorePacket}) => void): this;
     once(event: 'plugins', listener: (eventArgs: {plugins: NodeCorePlugin[]}) => void): this
     once(event: 'pipe.pre', listener: (eventArgs: {name: string, guid: Guid, plugin: Guid, cancel(): void, isCancelled(): boolean}) => void): this;
@@ -105,7 +105,7 @@ export declare interface NodeCoreBase {
     // Main events
     off(event: 'connect', listener: (eventArgs: {hostname: string, port: number}) => void): this;
     off(event: 'shutdown', listener: (eventArgs: {error: boolean, restart: boolean, cancel(): void, isCancelled(): boolean}) => void): this;
-    off(event: 'packet', listener: (eventArgs: {packet: crypto.NodeCorePacket, cancel(): void, isCancelled(): boolean}) => void): this;
+    off(event: 'packet', listener: (eventArgs: {client: NodeCoreBase, packet: crypto.NodeCorePacket, cancel(): void, isCancelled(): boolean}) => void): this;
     off(event: 'packet.unhandled', listener: (eventArgs: {client: NodeCoreBase, packet: crypto.NodeCorePacket}) => void): this;
     off(event: 'plugins', listener: (eventArgs: {plugins: NodeCorePlugin[]}) => void): this
     off(event: 'pipe.pre', listener: (eventArgs: {name: string, guid: Guid, plugin: Guid, cancel(): void, isCancelled(): boolean}) => void): this;
@@ -300,7 +300,7 @@ export class NodeCoreBase extends EventEmitter {
     protected onBufferComplete(data: Buffer) {
         const packet = crypto.decrypt(data);
 
-        if (this.emit('packet', { packet })) return;
+        if (this.emit('packet', { client: this, packet })) return;
 
         this.onPacket(packet);
     }
