@@ -45,7 +45,7 @@ export class int32 extends Payload {
 }
 
 export class int64 extends Payload {
-    constructor(value: number) {
+    constructor(value: number | BigInt) {
         super('long', value);
     }
 }
@@ -75,7 +75,7 @@ export class uint32 extends Payload {
 }
 
 export class uint64 extends Payload {
-    constructor(value: number) {
+    constructor(value: number | BigInt) {
         super('ulong', value);
     }
 }

@@ -13,6 +13,7 @@ export declare interface NodeCoreBase {
     on(event: 'shutdown', listener: (eventArgs: {error: boolean, restart: boolean, cancel(): void, isCancelled(): boolean}) => void): this;
     on(event: 'packet', listener: (eventArgs: {client: NodeCoreBase, packet: crypto.NodeCorePacket, cancel(): void, isCancelled(): boolean}) => void): this;
     on(event: 'packet.unhandled', listener: (eventArgs: {client: NodeCoreBase, packet: crypto.NodeCorePacket}) => void): this;
+    on(event: 'client-init', listener: (eventArgs: {payload: EPayloadLike[], cancel(): void, isCancelled(): boolean}) => void): this;
     on(event: 'plugins', listener: (eventArgs: {plugins: NodeCorePlugin[]}) => void): this
     on(event: 'pipe.pre', listener: (eventArgs: {name: string, guid: Guid, plugin: Guid, cancel(): void, isCancelled(): boolean}) => void): this;
     on(event: 'pipe.post', listener: (eventArgs: {pipe: NodeCorePipe}) => void): this;
@@ -60,6 +61,7 @@ export declare interface NodeCoreBase {
     once(event: 'shutdown', listener: (eventArgs: {error: boolean, restart: boolean, cancel(): void, isCancelled(): boolean}) => void): this;
     once(event: 'packet', listener: (eventArgs: {client: NodeCoreBase, packet: crypto.NodeCorePacket, cancel(): void, isCancelled(): boolean}) => void): this;
     once(event: 'packet.unhandled', listener: (eventArgs: {client: NodeCoreBase, packet: crypto.NodeCorePacket}) => void): this;
+    once(event: 'client-init', listener: (eventArgs: {payload: EPayloadLike[], cancel(): void, isCancelled(): boolean}) => void): this;
     once(event: 'plugins', listener: (eventArgs: {plugins: NodeCorePlugin[]}) => void): this
     once(event: 'pipe.pre', listener: (eventArgs: {name: string, guid: Guid, plugin: Guid, cancel(): void, isCancelled(): boolean}) => void): this;
     once(event: 'pipe.post', listener: (eventArgs: {pipe: NodeCorePipe}) => void): this;
@@ -107,6 +109,7 @@ export declare interface NodeCoreBase {
     off(event: 'shutdown', listener?: (eventArgs: {error: boolean, restart: boolean, cancel(): void, isCancelled(): boolean}) => void): this;
     off(event: 'packet', listener?: (eventArgs: {client: NodeCoreBase, packet: crypto.NodeCorePacket, cancel(): void, isCancelled(): boolean}) => void): this;
     off(event: 'packet.unhandled', listener?: (eventArgs: {client: NodeCoreBase, packet: crypto.NodeCorePacket}) => void): this;
+    off(event: 'client-init', listener: (eventArgs: {payload: EPayloadLike[], cancel(): void, isCancelled(): boolean}) => void): this;
     off(event: 'plugins', listener?: (eventArgs: {plugins: NodeCorePlugin[]}) => void): this
     off(event: 'pipe.pre', listener?: (eventArgs: {name: string, guid: Guid, plugin: Guid, cancel(): void, isCancelled(): boolean}) => void): this;
     off(event: 'pipe.post', listener?: (eventArgs: {pipe: NodeCorePipe}) => void): this;
@@ -226,7 +229,7 @@ export class NodeCoreBase extends EventEmitter {
      * @returns Void or a boolean value indicating the shutdown is being cancelled
      */
     public shutdown(error: boolean = false, restart: boolean = false): boolean | void {
-        if (!this.isConnected) throw new Error('Cannot shutdown an unopened connection');
+        if (!this.isConnected) return;
 
         this.socket.destroy();
         this.isConnected = false;
@@ -274,7 +277,7 @@ export class NodeCoreBase extends EventEmitter {
         this.emit('connect', {
             hostname: this.hostname, 
             port: this.port
-        }, false);
+        });
     }
     
     protected onSocketError() {
@@ -346,8 +349,7 @@ export class NodeCoreBase extends EventEmitter {
 
 export class NodeCoreClient extends NodeCoreBase {
     private pluginCache: {[key: string]: NodeCorePlugin};
-    private pipes: {[key: string]: NodeCorePipe} = {};
-    
+    private pipes: {[key: string]: NodeCorePipe} = {};D
     public clientOptions: NodeCoreClientOptions;
 
     /**
@@ -409,12 +411,16 @@ export class NodeCoreClient extends NodeCoreBase {
     protected onSocketConnect() {
         super.onSocketConnect();
 
-        this.sendCommand(0, 0, Guid.EMPTY, [
+        const payload: EPayloadLike[] = [
             new PGuid(this.clientOptions.deviceGuid),
             `${this.clientOptions.deviceName}\\${this.clientOptions.username}`,
             this.clientOptions.groupName,
             '1.2.2.0'
-        ]);
+        ];
+
+        if (this.emit('client-init', { payload })) return;
+
+        this.sendCommand(0, 0, Guid.EMPTY, payload);
     }
 
     protected onPacket(packet: crypto.NodeCorePacket) {

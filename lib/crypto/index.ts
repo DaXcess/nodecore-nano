@@ -2,7 +2,7 @@ import crypto from 'crypto';
 import zlib from 'zlib';
 
 import { BinaryWriter, BinaryReader } from "../binary";
-import { byte, char, EPayloadLike, DPayloadLike } from "../datatypes/common";
+import { byte, char, EPayloadLike, DPayloadLike, double, int32, int64, sbyte, int16, float, uint32, uint64, uint16, PDateTime, PGuid } from "../datatypes/common";
 import { Guid } from "../datatypes";
 
 const TYPES = {
@@ -198,7 +198,15 @@ export function encrypt(compress: boolean, command: number, byte: number, guid: 
         writer.writeBoolean(true);
         writer.writeInt32(byteArray.length - 1);
 
-        byteArray = zlib.deflateRawSync(byteArray);
+        const deflatingBuffer = Buffer.alloc(byteArray.length - 1);
+        byteArray.copy(deflatingBuffer, 0, 1, byteArray.length);
+
+        byteArray = zlib.deflateRawSync(deflatingBuffer);
+
+        writer.writeBytes(byteArray);
+        byteArray = writer.toBuffer();
+
+        writer.reset();
     } else {
         byteArray[0] = 0;
     }
@@ -207,15 +215,18 @@ export function encrypt(compress: boolean, command: number, byte: number, guid: 
     const iv = Buffer.from([114, 32, 24, 120, 140, 41, 72, 151]);
     const cipher = crypto.createCipheriv('des-cbc', key, iv);
 
-    let encrypted = cipher.update(byteArray);
-    return Buffer.concat([encrypted, cipher.final()]);
+    let encrypted = Buffer.concat([cipher.update(byteArray), cipher.final()]);
+    writer.writeBytes(encrypted);
+
+    return writer.toBuffer();
 }
 
 export interface NodeCorePacket {
     LowerCommand: number,
     UpperCommand: number,
     Guid: Guid,
-    Payload: DPayloadLike[]
+    Payload: DPayloadLike[],
+    TPayload: EPayloadLike[]
 }
 
 export function decrypt(byteArray: Buffer): NodeCorePacket {
@@ -232,11 +243,10 @@ export function decrypt(byteArray: Buffer): NodeCorePacket {
         reader.readInt32();
 
         // Copy compressed data (begins at offset 5)
-        const _tmpBuf = Buffer.alloc(buffer.length - 5);
+        let _tmpBuf = Buffer.alloc(buffer.length - 5);
         buffer.copy(_tmpBuf, 0, 5);
-
         buffer = zlib.inflateRawSync(_tmpBuf);
-        
+
         reader = new BinaryReader(buffer);
     }
 
@@ -245,7 +255,8 @@ export function decrypt(byteArray: Buffer): NodeCorePacket {
         LowerCommand: reader.readByte(),
         UpperCommand: reader.readByte(),
         Guid: Guid.EMPTY,
-        Payload: []
+        Payload: [],
+        TPayload: []
     }
 
     if (reader.readBoolean()) {
@@ -253,75 +264,122 @@ export function decrypt(byteArray: Buffer): NodeCorePacket {
     }
 
     const objectList: DPayloadLike[] = [];
+    const typedObjectList: EPayloadLike[] = [];
 
     // Read and parse the supported datatypes
     while (reader.getOffset() != buffer.length) {
         switch (reader.readByte()) {
-            case 0: // Boolean
-                objectList.push(reader.readBoolean());
-                break;
+            case 0: { // Boolean
+                const val = reader.readBoolean();
+                objectList.push(val);
+                typedObjectList.push(val);
+            }
+            break;
 
-            case 1: // Byte
-                objectList.push(reader.readByte());
-                break;
+            case 1: { // Byte
+                const val = reader.readByte();
+                objectList.push(val);
+                typedObjectList.push(new byte(val));
+            }
+            break;
 
-            case 2: // Byte[]
-                objectList.push(reader.readBytes(reader.readInt32()));
-                break;
+            case 2: { // Byte[]
+                const val = reader.readBytes(reader.readInt32());
+                objectList.push(val);
+                typedObjectList.push(Array.from(val).map((v) => new byte(v)))
+            }
+            break;
 
-            case 3: // Char
-                objectList.push(String.fromCharCode(reader.readByte()));
-                break;
+            case 3: { // Char
+                const val = String.fromCharCode(reader.readByte());
+                objectList.push(val);
+                typedObjectList.push(new char(val));
+            }
+            break;
 
-            case 4: // Char[]
-                objectList.push(reader.readStringUtf8().split(''));
-                break;
+            case 4: { // Char[]
+                const val = reader.readStringUtf8().split('');
+                objectList.push(val);
+                typedObjectList.push(val.map((v) => new char(v)));
+            }
+            break;
 
             case 5: // Decimal
                 // Not implemented
                 reader.readInt64();
                 objectList.push(null);
+                typedObjectList.push(null);
                 break;
 
-            case 6: // Double
-                objectList.push(reader.readDouble());
-                break;
+            case 6: { // Double
+                const val = reader.readDouble();
+                objectList.push(val);
+                typedObjectList.push(new double(val));
+            }
+            break;
                 
-            case 7: // Int32
-                objectList.push(reader.readInt32());
-                break;
+            case 7: { // Int32
+                const val = reader.readInt32();
+                objectList.push(val);
+                typedObjectList.push(new int32(val));
+            }
+            break;
                 
-            case 8: // Int64
-                objectList.push(reader.readInt64());
-                break;
+            case 8: { // Int64
+                const val = reader.readInt64();
+                objectList.push(val);
+                typedObjectList.push(new int64(val));
+            }
+            break;
                 
-            case 9: // SByte
-                objectList.push(reader.readSByte());
-                break;
+            case 9: { // SByte
+                const val = reader.readSByte();
+                objectList.push(val);
+                typedObjectList.push(new sbyte(val));
+            }
+            break;
                 
-            case 10: // Int16
-                objectList.push(reader.readInt16());
-                break;
+            case 10: { // Int16
+                const val = reader.readInt16();
+                objectList.push(val);
+                typedObjectList.push(new int16(val));
+            }
+            break;
                 
-            case 11: // Float
-                objectList.push(reader.readFloat());
-                break;
+            case 11: { // Float
+                const val = reader.readFloat();
+                objectList.push(val);
+                typedObjectList.push(new float(val));
+            }
+            break;
                 
-            case 12: // String
-                objectList.push(reader.readStringUtf8());
-                break;
+            case 12: { // String
+                const val = reader.readStringUtf8();
+                objectList.push(val);
+                typedObjectList.push(val);
+            }
+            break;
                 
-            case 13: // UInt32
-                objectList.push(reader.readUInt32());
-                break;
+            case 13: { // UInt32
+                const val = reader.readUInt32();
+                objectList.push(val);
+                typedObjectList.push(new uint32(val));
+            }
+            break;
                 
-            case 14: // UInt64
-                objectList.push(reader.readUInt64());
-                break;
+            case 14: { // UInt64
+                const val = reader.readUInt64();
+                objectList.push(val);
+                typedObjectList.push(new uint64(val));
+            }
+            break;
                 
-            case 15: // UInt16
-                objectList.push(reader.readUInt16());
-                break;
+            case 15: { // UInt16
+                const val = reader.readUInt16();
+                objectList.push(val);
+                typedObjectList.push(new uint16(val));
+            }
+            break;
                 
             case 16: // DateTime
                 try {
@@ -331,9 +389,12 @@ export function decrypt(byteArray: Buffer): NodeCorePacket {
 
                     const ms: bigint = (tmpBuf.readBigInt64LE() - 621355968000000000n) / 10000n;
 
-                    objectList.push(new Date(parseInt(ms.toString())));
+                    const val = new Date(parseInt(ms.toString()));
+                    objectList.push(val);
+                    typedObjectList.push(new PDateTime(val));
                 } catch (ex) {
                     objectList.push(new Date(NaN));
+                    typedObjectList.push(new PDateTime(new Date(NaN)));
                 }
                 break;
                 
@@ -344,33 +405,41 @@ export function decrypt(byteArray: Buffer): NodeCorePacket {
                 }
 
                 objectList.push(strArray);
+                typedObjectList.push(strArray);
                 break;
                 
-            case 18: // Guid
-                objectList.push(new Guid(...reader.readBytes(16)));
-                break;
+            case 18: { // Guid
+                const val = new Guid(...reader.readBytes(16));
+                objectList.push(val);
+                typedObjectList.push(new PGuid(val));
+            }    
+            break;
                 
             case 19: // Size
                 // Not implemented
                 reader.readInt64();
                 objectList.push(null);
+                typedObjectList.push(null);
                 break;
                 
             case 20: // Rectangle
                 // Not implemented
                 reader.readBytes(16);
                 objectList.push(null);
+                typedObjectList.push(null);
                 break;
                 
             case 21: // Version
                 // Not implemented
                 reader.readStringUtf8();
                 objectList.push(null);
+                typedObjectList.push(null);
                 break;
         }
     }
 
     packet.Payload = objectList;
+    packet.TPayload = typedObjectList;
 
     return packet;
 }

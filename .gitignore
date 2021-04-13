@@ -1,4 +1,7 @@
 node_modules/
 build/
-.vscode/
 .npmrc
+
+# Visual Studio Code
+.vscode/
+*.code-workspace
