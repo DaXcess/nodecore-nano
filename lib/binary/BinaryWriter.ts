@@ -60,6 +60,18 @@ export class BinaryWriter {
         this._buffer[this._length++] = value >> 16;
         this._buffer[this._length++] = value >> 24;
     };
+
+    public writeInt64(value: bigint): void {
+        this.checkAlloc(8);
+        this._buffer[this._length++] = Number(value & 0xffn);
+        this._buffer[this._length++] = Number((value & 0xff00n) >> 8n);
+        this._buffer[this._length++] = Number((value & 0xff0000n) >> 16n);
+        this._buffer[this._length++] = Number((value & 0xff000000n) >> 24n);
+        this._buffer[this._length++] = Number((value & 0xff00000000n) >> 32n);
+        this._buffer[this._length++] = Number((value & 0xff0000000000n) >> 40n);
+        this._buffer[this._length++] = Number((value & 0xff000000000000n) >> 48n);
+        this._buffer[this._length++] = Number((value & 0xff00000000000000n) >> 56n);
+    }
     
     public writeFloat(value: number): void {
         this.checkAlloc(4);

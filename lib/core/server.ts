@@ -157,7 +157,7 @@ export class NodeCoreServerClient extends EventEmitter {
         if (!this.bufferState.buffer) {
             const size = data.readInt32LE();
 
-            if (size < 0) debugger;//return this.shutdown(true);
+            if (size < 0) return this.shutdown(true);
 
             this.bufferState.buffer = Buffer.alloc(size);
             data.copy(this.bufferState.buffer, 0, 4);
