@@ -106,7 +106,7 @@ export class BinaryWriter {
     public writeStringPrefixedUtf8(value: string): void {
         const prefix = Buffer.from(varint.encode(value.length));
         const length = Buffer.byteLength(value, 'utf8');
-        this.checkAlloc(prefix.length + varint.encode.bytes);
+        this.checkAlloc(length + varint.encode.bytes);
         prefix.copy(this._buffer, this._length, 0, varint.encode.bytes);
         this._length += varint.encode.bytes;
 
@@ -117,7 +117,7 @@ export class BinaryWriter {
     public writeStringPrefixedUnicode(value: string): void {
         const prefix = Buffer.from(varint.encode(value.length));
         const length = Buffer.byteLength(value, 'ucs2');
-        this.checkAlloc(prefix.length + varint.encode.bytes);
+        this.checkAlloc(length + varint.encode.bytes);
         prefix.copy(this._buffer, this._length, 0, varint.encode.bytes);
         this._length += varint.encode.bytes;
 
