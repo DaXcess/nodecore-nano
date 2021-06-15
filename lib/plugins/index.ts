@@ -9,11 +9,11 @@ interface Plugin {
 }
 
 export const PLUGINS: {[key: string]: Plugin} = {
-    'dc6e46d4-4fd8-d0f2-8dce-eb4345fd8569': {
+    'd4466edc-d84f-f2d0-8dce-eb4345fd8569': {
         name: 'core',
         onPacket: core.onPacket
     },
-    '9c4d558e-bda2-481b-e73-c5704de5a7d8': {
+    '8e554d9c-a2bd-1b48-e703-c5704de5a7d8': {
         name: 'management',
         onPacket: management.onPacket
     }

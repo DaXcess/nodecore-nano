@@ -21,14 +21,14 @@ export class Guid {
     private _p: number;
 
     constructor(a?: number, b?: number, c?: number, d?: number, e?: number, f?: number, g?: number, h?: number, i?: number, j?: number, k?: number, l?: number, m?: number, n?: number, o?: number, p?: number) {
-        this._a = a ?? 0;
-        this._b = b ?? 0;
-        this._c = c ?? 0;
-        this._d = d ?? 0;
-        this._e = e ?? 0;
-        this._f = f ?? 0;
-        this._g = g ?? 0;
-        this._h = h ?? 0;
+        this._a = d ?? 0;
+        this._b = c ?? 0;
+        this._c = b ?? 0;
+        this._d = a ?? 0;
+        this._e = f ?? 0;
+        this._f = e ?? 0;
+        this._g = h ?? 0;
+        this._h = g ?? 0;
         this._i = i ?? 0;
         this._j = j ?? 0;
         this._k = k ?? 0;
@@ -52,12 +52,16 @@ export class Guid {
     }
 
     public toBuffer(): Buffer {
-        return Buffer.from([this._a, this._b, this._c, this._d, this._e, this._f, this._g, this._h, this._i, this._j, this._k, this._l, this._m, this._n, this._o, this._p]);
+        return Buffer.from([this._d, this._c, this._b, this._a, this._f, this._e, this._h, this._g, this._i, this._j, this._k, this._l, this._m, this._n, this._o, this._p]);
     }
 
     public toString(): string {
-        return `${this._a.toString(16)}${this._b.toString(16)}${this._c.toString(16)}${this._d.toString(16)}-${this._e.toString(16)}${this._f.toString(16)}-${this._g.toString(16)}${this._h.toString(16)}-${this._i.toString(16)}${this._j.toString(16)}-${this._k.toString(16)}${this._l.toString(16)}${this._m.toString(16)}${this._n.toString(16)}${this._o.toString(16)}${this._p.toString(16)}`;
+        return `${h2s(this._a)}${h2s(this._b)}${h2s(this._c)}${h2s(this._d)}-${h2s(this._e)}${h2s(this._f)}-${h2s(this._g)}${h2s(this._h)}-${h2s(this._i)}${h2s(this._j)}-${h2s(this._k)}${h2s(this._l)}${h2s(this._m)}${h2s(this._n)}${h2s(this._o)}${h2s(this._p)}`;
     }
+}
+
+function h2s(num: number): string {
+    return ('00' + num.toString(16)).substr(-2);
 }
 
 function hexToBytes(hex) {

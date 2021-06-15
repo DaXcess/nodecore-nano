@@ -107,8 +107,11 @@ export function encrypt(compress: boolean, command: number, byte: number, guid: 
                     }
                     break;
 
+                    // Int64
                 case 8:
                     {
+                        const data: bigint = dataValue;
+                        writer.writeInt64(data);
                         // Not implemented
                     }
                     break;
