@@ -157,6 +157,7 @@ interface NodeCoreClientConstructorOptions {
     deviceName?: string;
     deviceGuid?: Guid;
     groupName?: string;
+    connectTimeout?: number;
 }
 
 interface NodeCorePipeConstructorOptions {
@@ -174,6 +175,7 @@ interface NodeCoreClientOptions {
     deviceName: string;
     deviceGuid: Guid;
     groupName: string;
+    timeout: number;
 }
 
 interface NodeCorePlugin {
@@ -209,12 +211,13 @@ export class NodeCoreBase extends EventEmitter {
     /**
      * Initiate a connection with the server
      */
-    public connect(): void {
+    public connect(timeout: number): void {
         if (this.isConnected) return;
 
         this.isConnected = true; // Not exactly true but this prevents some race-conditions
 
         this.socket = new Socket();
+        this.socket.setTimeout(timeout, () => this.socket.destroy(new Error('Connect timed out')));
         this.socket.on('data', this.onDataReceived);
         this.socket.on('error', this.onSocketError);
         this.socket.connect(this.port, this.hostname, this.onSocketConnect);
@@ -362,7 +365,8 @@ export class NodeCoreClient extends NodeCoreBase {
             username: opts.username ?? "John",
             deviceName: opts.deviceName ?? "JOHN-PC",
             groupName: opts.groupName ?? "Default",
-            deviceGuid: opts.deviceGuid ?? new Guid(...randomBytes(16))
+            deviceGuid: opts.deviceGuid ?? new Guid(...randomBytes(16)),
+            timeout: opts.connectTimeout ?? 3e4
         };
 
         this.connect = this.connect.bind(this);
@@ -378,7 +382,7 @@ export class NodeCoreClient extends NodeCoreBase {
      * Initiate a connection with the server
      */
     public connect(): void {
-        super.connect();
+        super.connect(this.clientOptions.timeout);
         this.pluginCache = {};
     }
     
@@ -473,7 +477,7 @@ export class NodeCoreClient extends NodeCoreBase {
                     this.emit('pipe.dead', {...pipeInfo, error: e.error}, false);
                 });
 
-                client.connect();
+                client.connect(this.clientOptions.timeout);
 
                 this.pipes[pipeInfo.name] = client;
 
