@@ -21,10 +21,10 @@
     "lib": "lib"
   },
   "repository": {
-    "url": "https://github.com/RoDaBaFilms/nodecore-nano.git"
+    "url": "https://github.com/Armal-Malware-Research/nodecore-nano.git"
   },
   "bugs": {
-    "url": "https://github.com/RoDaBaFilms/nodecore-nano/issues"
+    "url": "https://github.com/Armal-Malware-Research/nodecore-nano/issues"
   },
-  "homepage": "https://github.com/RoDaBaFilms/nodecore-nano#readme"
+  "homepage": "https://github.com/Armal-Malware-Research/nodecore-nano#readme"
 }
