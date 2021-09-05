@@ -1,7 +1,7 @@
 import { Socket, createServer, Server } from 'net';
 import EventEmitter from 'events';
 import * as crypto from '../crypto';
-import { EPayloadLike, Guid } from '../datatypes';
+import { PayloadLike, Guid } from '../datatypes';
 
 // 'on' typings
 export declare interface NodeCoreServer {
@@ -213,7 +213,7 @@ export class NodeCoreServerClient extends EventEmitter {
      * @param guid The targetted plugin GUID
      * @param payload The payload to send
      */
-    public sendCommand(command: number, byte: number, guid: Guid, payload: EPayloadLike[]) {
+    public sendCommand(command: number, byte: number, guid: Guid, payload: PayloadLike[]) {
         const buffer = crypto.encrypt(true, command, byte, guid, payload);
 
         const arr = Buffer.from([

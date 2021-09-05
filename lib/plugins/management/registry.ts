@@ -1,15 +1,15 @@
 import { NodeCorePluginClient } from "../../core/client";
-import { byte, DPayloadLike, EPayloadLike } from "../../datatypes/common";
+import { byte, int32, PayloadLike } from "../../datatypes/common";
 
-export default function handleRegistryCommand(client: NodeCorePluginClient, payload: DPayloadLike[]) {
-    switch (<number>payload[1]) {
+export default function handleRegistryCommand(client: NodeCorePluginClient, payload: PayloadLike[]) {
+    switch ((<byte>payload[1]).value) {
         case 0: // GetKeys
             handleGetKeys(client, payload);
             break;
 
         case 1: // CreateKey
             client.emit('registry.createkey', {
-                hive: _hive(<number>payload[2]),
+                hive: _hive((<int32>payload[2]).value),
                 subkey: _strip(<string>payload[3]),
                 name: <string>payload[4]
             }, false);
@@ -17,7 +17,7 @@ export default function handleRegistryCommand(client: NodeCorePluginClient, payl
 
         case 2: // RenameKey
             client.emit('registry.renamekey', {
-                hive: _hive(<number>payload[2]),
+                hive: _hive((<int32>payload[2]).value),
                 subkey: _strip(<string>payload[3]),
                 fromkey: <string>payload[4],
                 tokey: <string>payload[5]
@@ -26,7 +26,7 @@ export default function handleRegistryCommand(client: NodeCorePluginClient, payl
 
         case 3: // DeleteKey
             client.emit('registry.deletekey', {
-                hive: _hive(<number>payload[2]),
+                hive: _hive((<int32>payload[2]).value),
                 subkey: _strip(<string>payload[3])
             }, false);
             break;
@@ -41,7 +41,7 @@ export default function handleRegistryCommand(client: NodeCorePluginClient, payl
     
         case 6: // RenameValue
             client.emit('registry.renamevalue', {
-                hive: _hive(<number>payload[2]),
+                hive: _hive((<int32>payload[2]).value),
                 subkey: _strip(<string>payload[3]),
                 fromvalue: <string>payload[4],
                 tovalue: <string>payload[5]
@@ -50,7 +50,7 @@ export default function handleRegistryCommand(client: NodeCorePluginClient, payl
 
         case 7: // DeleteValue
             client.emit('registry.deletevalue', {
-                hive: _hive(<number>payload[2]),
+                hive: _hive((<int32>payload[2]).value),
                 subkey: _strip(<string>payload[3]),
                 value: <string>payload[4]
             }, false);
@@ -58,8 +58,8 @@ export default function handleRegistryCommand(client: NodeCorePluginClient, payl
     }
 }
 
-function handleGetKeys(client: NodeCorePluginClient, payload: DPayloadLike[]) {
-    const hive: string = _hive(<number>payload[2]);
+function handleGetKeys(client: NodeCorePluginClient, payload: PayloadLike[]) {
+    const hive: string = _hive((<int32>payload[2]).value);
     let subkey: string = _strip(<string>payload[3]);
     
     const subKeys: {[key: string]: boolean} = {};
@@ -77,7 +77,7 @@ function handleGetKeys(client: NodeCorePluginClient, payload: DPayloadLike[]) {
         getSubKeys: (): {[key: string]: boolean} => subKeys
     }, false);
 
-    const packet: EPayloadLike[] = [];
+    const packet: PayloadLike[] = [];
 
     packet.push(new byte(0), new byte(0), <string>payload[3]);
 
@@ -89,8 +89,8 @@ function handleGetKeys(client: NodeCorePluginClient, payload: DPayloadLike[]) {
     client.sendCommand(packet);
 }
 
-function handleGetValues(client: NodeCorePluginClient, payload: DPayloadLike[]) {
-    const hive: string = _hive(<number>payload[2]);
+function handleGetValues(client: NodeCorePluginClient, payload: PayloadLike[]) {
+    const hive: string = _hive((<int32>payload[2]).value);
     let subkey: string = <string>payload[3];
     
     let fsubkey = _strip(subkey);
@@ -109,7 +109,7 @@ function handleGetValues(client: NodeCorePluginClient, payload: DPayloadLike[]) 
         getValues: (): {[key: string]: string} => keyValues
     }, false);
 
-    const packet: EPayloadLike[] = [new byte(0), new byte(4), subkey];
+    const packet: PayloadLike[] = [new byte(0), new byte(4), subkey];
 
     for (const value of Object.keys(keyValues)) {
         packet.push(value, keyValues[value]);
@@ -118,8 +118,8 @@ function handleGetValues(client: NodeCorePluginClient, payload: DPayloadLike[]) 
     client.sendCommand(packet);
 }
 
-function handleCreateOrChangeValue(client: NodeCorePluginClient, payload: DPayloadLike[]) {
-    const hive: string = _hive(<number>payload[2]);
+function handleCreateOrChangeValue(client: NodeCorePluginClient, payload: PayloadLike[]) {
+    const hive: string = _hive((<int32>payload[2]).value);
     const subkey: string = _strip(<string>payload[3]);
     const valueName: string = <string>payload[4];
     const valueValue: string = <string>payload[5];

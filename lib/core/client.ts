@@ -1,7 +1,7 @@
 import { Socket } from 'net';
 import EventEmitter from 'events';
 import * as crypto from '../crypto';
-import { EPayloadLike, PGuid } from '../datatypes/common';
+import { byte, PayloadLike, PDateTime, PGuid } from '../datatypes/common';
 import { Guid } from '../datatypes';
 import { randomBytes } from 'crypto';
 import { PLUGINS } from '../plugins';
@@ -13,7 +13,7 @@ export declare interface NodeCoreBase {
     on(event: 'shutdown', listener: (eventArgs: {error: boolean, restart: boolean, cancel(): void, isCancelled(): boolean}) => void): this;
     on(event: 'packet', listener: (eventArgs: {client: NodeCoreBase, packet: crypto.NodeCorePacket, cancel(): void, isCancelled(): boolean}) => void): this;
     on(event: 'packet.unhandled', listener: (eventArgs: {client: NodeCoreBase, packet: crypto.NodeCorePacket}) => void): this;
-    on(event: 'client-init', listener: (eventArgs: {payload: EPayloadLike[], cancel(): void, isCancelled(): boolean}) => void): this;
+    on(event: 'client-init', listener: (eventArgs: {payload: PayloadLike[], cancel(): void, isCancelled(): boolean}) => void): this;
     on(event: 'plugins', listener: (eventArgs: {plugins: NodeCorePlugin[]}) => void): this
     on(event: 'pipe.pre', listener: (eventArgs: {name: string, guid: Guid, plugin: Guid, cancel(): void, isCancelled(): boolean}) => void): this;
     on(event: 'pipe.post', listener: (eventArgs: {pipe: NodeCorePipe}) => void): this;
@@ -61,7 +61,7 @@ export declare interface NodeCoreBase {
     once(event: 'shutdown', listener: (eventArgs: {error: boolean, restart: boolean, cancel(): void, isCancelled(): boolean}) => void): this;
     once(event: 'packet', listener: (eventArgs: {client: NodeCoreBase, packet: crypto.NodeCorePacket, cancel(): void, isCancelled(): boolean}) => void): this;
     once(event: 'packet.unhandled', listener: (eventArgs: {client: NodeCoreBase, packet: crypto.NodeCorePacket}) => void): this;
-    once(event: 'client-init', listener: (eventArgs: {payload: EPayloadLike[], cancel(): void, isCancelled(): boolean}) => void): this;
+    once(event: 'client-init', listener: (eventArgs: {payload: PayloadLike[], cancel(): void, isCancelled(): boolean}) => void): this;
     once(event: 'plugins', listener: (eventArgs: {plugins: NodeCorePlugin[]}) => void): this
     once(event: 'pipe.pre', listener: (eventArgs: {name: string, guid: Guid, plugin: Guid, cancel(): void, isCancelled(): boolean}) => void): this;
     once(event: 'pipe.post', listener: (eventArgs: {pipe: NodeCorePipe}) => void): this;
@@ -109,7 +109,7 @@ export declare interface NodeCoreBase {
     off(event: 'shutdown', listener?: (eventArgs: {error: boolean, restart: boolean, cancel(): void, isCancelled(): boolean}) => void): this;
     off(event: 'packet', listener?: (eventArgs: {client: NodeCoreBase, packet: crypto.NodeCorePacket, cancel(): void, isCancelled(): boolean}) => void): this;
     off(event: 'packet.unhandled', listener?: (eventArgs: {client: NodeCoreBase, packet: crypto.NodeCorePacket}) => void): this;
-    off(event: 'client-init', listener: (eventArgs: {payload: EPayloadLike[], cancel(): void, isCancelled(): boolean}) => void): this;
+    off(event: 'client-init', listener: (eventArgs: {payload: PayloadLike[], cancel(): void, isCancelled(): boolean}) => void): this;
     off(event: 'plugins', listener?: (eventArgs: {plugins: NodeCorePlugin[]}) => void): this
     off(event: 'pipe.pre', listener?: (eventArgs: {name: string, guid: Guid, plugin: Guid, cancel(): void, isCancelled(): boolean}) => void): this;
     off(event: 'pipe.post', listener?: (eventArgs: {pipe: NodeCorePipe}) => void): this;
@@ -262,7 +262,7 @@ export class NodeCoreBase extends EventEmitter {
      * @param guid The targetted plugin GUID
      * @param payload The payload to send
      */
-    public sendCommand(command: number, byte: number, guid: Guid, payload: EPayloadLike[]) {
+    public sendCommand(command: number, byte: number, guid: Guid, payload: PayloadLike[]) {
         const buffer = crypto.encrypt(true, command, byte, guid, payload);
 
         const arr = Buffer.from([
@@ -415,7 +415,7 @@ export class NodeCoreClient extends NodeCoreBase {
     protected onSocketConnect() {
         super.onSocketConnect();
 
-        const payload: EPayloadLike[] = [
+        const payload: PayloadLike[] = [
             new PGuid(this.clientOptions.deviceGuid),
             `${this.clientOptions.deviceName}\\${this.clientOptions.username}`,
             this.clientOptions.groupName,
@@ -450,8 +450,8 @@ export class NodeCoreClient extends NodeCoreBase {
 
                 const pipeInfo = {
                     name: <string>packet.Payload[0],
-                    guid: <Guid>packet.Payload[1],
-                    plugin: <Guid>packet.Payload[2]
+                    guid: (<PGuid>packet.Payload[1]).value,
+                    plugin: (<PGuid>packet.Payload[2]).value
                 }
 
                 if (Object.keys(this.pipes).includes(pipeInfo.name))
@@ -512,7 +512,7 @@ export class NodeCoreClient extends NodeCoreBase {
                 const guids: PGuid[] = [];
 
                 for (var i = 0; i < packet.Payload.length; i+=3) {
-                    guids.push(new PGuid(<Guid>packet.Payload[i]));
+                    guids.push(<PGuid>packet.Payload[i]);
                 }
 
                 this.sendCommand(1, 2, Guid.EMPTY, guids);
@@ -520,10 +520,10 @@ export class NodeCoreClient extends NodeCoreBase {
                 break;
             case 3:
                 for (var i = 0; i < packet.Payload.length; i+=5) {
-                    this.pluginCache[(<Guid>packet.Payload[i]).toString()] = {
-                        guid: <Guid>packet.Payload[i],
-                        buildTime: <Date>packet.Payload[i + 1],
-                        size: (<Uint8Array>packet.Payload[i + 4]).length,
+                    this.pluginCache[((<PGuid>packet.Payload[i]).value).toString()] = {
+                        guid: (<PGuid>packet.Payload[i]).value,
+                        buildTime: (<PDateTime>packet.Payload[i + 1]).value,
+                        size: (<byte[]>packet.Payload[i + 4]).length,
                         name: <string>packet.Payload[i + 2]
                     };
                 }
@@ -602,7 +602,7 @@ export class NodeCorePluginClient<T extends NodeCoreBase = NodeCoreClient> {
         this.emit = this.emit.bind(this);
     }
 
-    public sendCommand(payload: EPayloadLike[]) {
+    public sendCommand(payload: PayloadLike[]) {
         this.client.sendCommand(0, 4, this.guid, payload);
     }
 
@@ -610,5 +610,3 @@ export class NodeCorePluginClient<T extends NodeCoreBase = NodeCoreClient> {
         return this.client.emit(`${this.name}.${event}`, arg, cancellable);
     }
 }
-
-// PLEASE STOP I DONT WANT TO SEE LEGO PIECE 26047
