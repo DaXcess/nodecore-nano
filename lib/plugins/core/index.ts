@@ -1,8 +1,8 @@
 import { NodeCorePluginClient } from "../../core/client";
-import { byte, DPayloadLike, int32, PDateTime } from "../../datatypes/common";
+import { byte, PayloadLike, int32, PDateTime } from "../../datatypes/common";
 
-export function onPacket(client: NodeCorePluginClient, _pipe: string, payload: DPayloadLike[]): boolean {
-    switch (<number>payload[0]) {
+export function onPacket(client: NodeCorePluginClient, _pipe: string, payload: PayloadLike[]): boolean {
+    switch ((<byte>payload[0]).value) {
         case 0: // CoreCommand
             handleCoreCommand(client, payload);
             break;
@@ -19,8 +19,8 @@ export function onPacket(client: NodeCorePluginClient, _pipe: string, payload: D
     return true;
 }
 
-function handleCoreCommand(client: NodeCorePluginClient, payload: DPayloadLike[]) {
-    switch (<number>payload[1]) {
+function handleCoreCommand(client: NodeCorePluginClient, payload: PayloadLike[]) {
+    switch ((<byte>payload[1]).value) {
         case 0: // Initialize
             const initOpts = {
                 osName: "Windows 10 Home",
@@ -71,8 +71,8 @@ function handleCoreCommand(client: NodeCorePluginClient, payload: DPayloadLike[]
     }
 }
 
-function handleConnectionCommand(client: NodeCorePluginClient, payload: DPayloadLike[]) {
-    switch (<number>payload[1]) {
+function handleConnectionCommand(client: NodeCorePluginClient, payload: PayloadLike[]) {
+    switch ((<byte>payload[1]).value) {
         case 0:
             if (!client.emit('restart', null))
                 client.client.restart();
@@ -93,8 +93,8 @@ function handleConnectionCommand(client: NodeCorePluginClient, payload: DPayload
     }
 }
 
-function handleSystemCommand(client: NodeCorePluginClient, payload: DPayloadLike[]) {
-    switch (<number>payload[1]) {
+function handleSystemCommand(client: NodeCorePluginClient, payload: PayloadLike[]) {
+    switch ((<byte>payload[1]).value) {
         case 0:
             client.emit('sysreboot', null, false);
             break;

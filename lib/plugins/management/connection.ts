@@ -1,6 +1,6 @@
 import { NodeCorePluginClient } from "../../core/client";
-import { DPayloadLike } from "../../datatypes/common";
+import { PayloadLike } from "../../datatypes/common";
 
-export default function handleConnectionCommand(client: NodeCorePluginClient, payload: DPayloadLike[]) {
+export default function handleConnectionCommand(client: NodeCorePluginClient, payload: PayloadLike[]) {
     
 }

@@ -1,102 +1,99 @@
 import {Guid} from "./guid";
 
-export class Payload {
-    public type: string;
-    public value: any;
+export class Payload<T> {
+    public value: T;
 
-    constructor(type: string, value: any) {
-        this.type = type;
+    constructor(value: T) {
         this.value = value;
     }
 }
 
-export class byte extends Payload {
+export class byte extends Payload<number> {
     constructor(value: number) {
-        super('byte', value);
+        super(value);
     }
 }
 
-export class char extends Payload {
+export class char extends Payload<number> {
     constructor(value: number | string) {
         if (typeof value === 'number') {
-            super('char', value);
+            super(value);
         } else {
-            super('char', value[0].charCodeAt(0));
+            super(value[0].charCodeAt(0));
         }
     }
 }
 
-export class decimal extends Payload {
+export class decimal extends Payload<number> {
     constructor(value: number) {
-        super('decimal', value);
+        super(value);
     }
 }
 
-export class double extends Payload {
+export class double extends Payload<number> {
     constructor(value: number) {
-        super('double', value);
+        super(value);
     }
 }
 
-export class int32 extends Payload {
+export class int32 extends Payload<number> {
     constructor(value: number) {
-        super('int', value);
+        super(value);
     }
 }
 
-export class int64 extends Payload {
+export class int64 extends Payload<number | BigInt> {
     constructor(value: number | BigInt) {
-        super('long', value);
+        super(value);
     }
 }
 
-export class sbyte extends Payload {
+export class sbyte extends Payload<number> {
     constructor(value: number) {
-        super('sbyte', value);
+        super(value);
     }
 }
 
-export class int16 extends Payload {
+export class int16 extends Payload<number> {
     constructor(value: number) {
-        super('short', value);
+        super(value);
     }
 }
 
-export class float extends Payload {
+export class float extends Payload<number> {
     constructor(value: number) {
-        super('decimal', value);
+        super(value);
     }
 }
 
-export class uint32 extends Payload {
+export class uint32 extends Payload<number> {
     constructor(value: number) {
-        super('uint', value);
+        super(value);
     }
 }
 
-export class uint64 extends Payload {
+export class uint64 extends Payload<number | BigInt> {
     constructor(value: number | BigInt) {
-        super('ulong', value);
+        super(value);
     }
 }
 
-export class uint16 extends Payload {
+export class uint16 extends Payload<number> {
     constructor(value: number) {
-        super('ushort', value);
+        super(value);
     }
 }
 
-export class PGuid extends Payload {
+export class PGuid extends Payload<Guid> {
     constructor(value: Guid) {
-        super('Guid', value);
+        super(value);
     }
 }
 
-export class PDateTime extends Payload {
+export class PDateTime extends Payload<Date> {
     constructor(value: Date) {
-        super('DateTime', value);
+        super(value);
     }
 }
 
-export type EPayloadLike = Payload | Payload[] | string | string[] | boolean;
-export type DPayloadLike = string | string[] | boolean | number | Uint8Array | BigInt | Date | Guid;
+export type PayloadLike = Payload<any> | Payload<any>[] | string | string[] | boolean;

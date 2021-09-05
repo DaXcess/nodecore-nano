@@ -1,13 +1,13 @@
 import { NodeCorePluginClient } from "../../core/client";
-import { DPayloadLike } from "../../datatypes/common";
+import { byte, PayloadLike } from "../../datatypes/common";
 import handleConnectionCommand from "./connection";
 import handleConsoleCommand from "./console";
 import handleFileCommand from "./file";
 import handleProcessCommand from "./process";
 import handleRegistryCommand from "./registry";
 
-export function onPacket(client: NodeCorePluginClient, pipe: string, payload: DPayloadLike[]): boolean {
-    switch (<number>payload[0]) {
+export function onPacket(client: NodeCorePluginClient, pipe: string, payload: PayloadLike[]): boolean {
+    switch ((<byte>payload[0]).value) {
         case 0: // RegistryCommand
             handleRegistryCommand(client, payload);
             return true;
