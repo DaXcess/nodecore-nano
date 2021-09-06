@@ -10,7 +10,7 @@ import { PLUGINS } from '../plugins';
 export declare interface NodeCoreBase {
     // Main events
     on(event: 'connect', listener: (eventArgs: {hostname: string, port: number}) => void): this;
-    on(event: 'shutdown', listener: (eventArgs: {error: boolean, restart: boolean, cancel(): void, isCancelled(): boolean}) => void): this;
+    on(event: 'shutdown', listener: (eventArgs: {error: Error, restart: boolean, cancel(): void, isCancelled(): boolean}) => void): this;
     on(event: 'packet', listener: (eventArgs: {client: NodeCoreBase, packet: crypto.NodeCorePacket, cancel(): void, isCancelled(): boolean}) => void): this;
     on(event: 'packet.unhandled', listener: (eventArgs: {client: NodeCoreBase, packet: crypto.NodeCorePacket}) => void): this;
     on(event: 'client-init', listener: (eventArgs: {payload: PayloadLike[], cancel(): void, isCancelled(): boolean}) => void): this;
@@ -58,7 +58,7 @@ export declare interface NodeCoreBase {
 export declare interface NodeCoreBase {
     // Main events
     once(event: 'connect', listener: (eventArgs: {hostname: string, port: number}) => void): this;
-    once(event: 'shutdown', listener: (eventArgs: {error: boolean, restart: boolean, cancel(): void, isCancelled(): boolean}) => void): this;
+    once(event: 'shutdown', listener: (eventArgs: {error: Error, restart: boolean, cancel(): void, isCancelled(): boolean}) => void): this;
     once(event: 'packet', listener: (eventArgs: {client: NodeCoreBase, packet: crypto.NodeCorePacket, cancel(): void, isCancelled(): boolean}) => void): this;
     once(event: 'packet.unhandled', listener: (eventArgs: {client: NodeCoreBase, packet: crypto.NodeCorePacket}) => void): this;
     once(event: 'client-init', listener: (eventArgs: {payload: PayloadLike[], cancel(): void, isCancelled(): boolean}) => void): this;
@@ -106,7 +106,7 @@ export declare interface NodeCoreBase {
 export declare interface NodeCoreBase {
     // Main events
     off(event: 'connect', listener?: (eventArgs: {hostname: string, port: number}) => void): this;
-    off(event: 'shutdown', listener?: (eventArgs: {error: boolean, restart: boolean, cancel(): void, isCancelled(): boolean}) => void): this;
+    off(event: 'shutdown', listener?: (eventArgs: {error: Error, restart: boolean, cancel(): void, isCancelled(): boolean}) => void): this;
     off(event: 'packet', listener?: (eventArgs: {client: NodeCoreBase, packet: crypto.NodeCorePacket, cancel(): void, isCancelled(): boolean}) => void): this;
     off(event: 'packet.unhandled', listener?: (eventArgs: {client: NodeCoreBase, packet: crypto.NodeCorePacket}) => void): this;
     off(event: 'client-init', listener: (eventArgs: {payload: PayloadLike[], cancel(): void, isCancelled(): boolean}) => void): this;
