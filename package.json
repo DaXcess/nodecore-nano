@@ -21,7 +21,7 @@
     "lib": "lib"
   },
   "repository": {
-    "url": "https://github.com/Armal-Malware-Research/nodecore-nano.git"
+    "url": "git+https://github.com/Armal-Malware-Research/nodecore-nano.git"
   },
   "bugs": {
     "url": "https://github.com/Armal-Malware-Research/nodecore-nano/issues"
