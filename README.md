@@ -6,14 +6,14 @@ A client library used to interface with NanoCore 1.2.2.0 servers
 ## Installation
 Use npm to install the library
 ```sh
-npm install --save @rodabafilms/nodecore-nano
+npm install --save @armal/nodecore-nano
 ```
 
 ## Build from source
 Use git to pull the package and build using tsc
 
 ```sh
-git clone https://github.com/RoDaBaFilms/nodecore-nano
+git clone https://github.com/Armal-Malware-Research/nodecore-nano
 cd nodecore-nano 
 npm install
 npx tsc
@@ -27,7 +27,7 @@ npm install <path-to-nodecore-nano>
 
 # Usage
 ```js
-const { NodeCoreClient } = require('@rodabafilms/nodecore-nano');
+const { NodeCoreClient } = require('@armal/nodecore-nano');
 
 const client = new NodeCoreClient({
     hostname: '127.0.0.1',

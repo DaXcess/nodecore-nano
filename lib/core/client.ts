@@ -157,7 +157,9 @@ interface NodeCoreClientConstructorOptions {
     deviceName?: string;
     deviceGuid?: Guid;
     groupName?: string;
+    requestPluginBinaries?: boolean;
     connectTimeout?: number;
+    keepAliveTimeout?: number;
 }
 
 interface NodeCorePipeConstructorOptions {
@@ -175,7 +177,9 @@ interface NodeCoreClientOptions {
     deviceName: string;
     deviceGuid: Guid;
     groupName: string;
-    timeout: number;
+    requestPluginBinaries: boolean;
+    connectTimeout: number;
+    keepAliveTimeout: number;
 }
 
 interface NodeCorePlugin {
@@ -231,7 +235,7 @@ export class NodeCoreBase extends EventEmitter {
      * 
      * @returns Void or a boolean value indicating the shutdown is being cancelled
      */
-    public shutdown(error: boolean = false, restart: boolean = false): boolean | void {
+    public shutdown(error?: Error, restart: boolean = false): boolean | void {
         if (!this.isConnected) return;
 
         this.socket.destroy();
@@ -249,7 +253,7 @@ export class NodeCoreBase extends EventEmitter {
      * Restart the connection
      */
     public restart(): void {
-        if (!this.shutdown(false, true)) return;
+        if (!this.shutdown(undefined, true)) return;
 
         setTimeout(this.connect, 1000);
     }
@@ -283,8 +287,8 @@ export class NodeCoreBase extends EventEmitter {
         });
     }
     
-    protected onSocketError() {
-        this.shutdown(true);
+    protected onSocketError(err: Error) {
+        this.shutdown(err);
     }
 
     protected onDataReceived(data: Buffer) {
@@ -352,7 +356,9 @@ export class NodeCoreBase extends EventEmitter {
 
 export class NodeCoreClient extends NodeCoreBase {
     private pluginCache: {[key: string]: NodeCorePlugin};
-    private pipes: {[key: string]: NodeCorePipe} = {};D
+    private pipes: {[key: string]: NodeCorePipe} = {};
+    private disconnectTimeout: NodeJS.Timeout;
+
     public clientOptions: NodeCoreClientOptions;
 
     /**
@@ -366,7 +372,9 @@ export class NodeCoreClient extends NodeCoreBase {
             deviceName: opts.deviceName ?? "JOHN-PC",
             groupName: opts.groupName ?? "Default",
             deviceGuid: opts.deviceGuid ?? new Guid(...randomBytes(16)),
-            timeout: opts.connectTimeout ?? 3e4
+            requestPluginBinaries: opts.requestPluginBinaries ?? false,
+            connectTimeout: opts.connectTimeout ?? 3e4,
+            keepAliveTimeout: opts.keepAliveTimeout ?? 3e4
         };
 
         this.connect = this.connect.bind(this);
@@ -382,7 +390,7 @@ export class NodeCoreClient extends NodeCoreBase {
      * Initiate a connection with the server
      */
     public connect(): void {
-        super.connect(this.clientOptions.timeout);
+        super.connect(this.clientOptions.connectTimeout);
         this.pluginCache = {};
     }
     
@@ -394,7 +402,7 @@ export class NodeCoreClient extends NodeCoreBase {
      * 
      * @returns Void or a boolean value indicating the shutdown is being cancelled
      */
-    public shutdown(error: boolean = false, restart: boolean = false): boolean | void {
+    public shutdown(error?: Error, restart: boolean = false): boolean | void {
         const ret = super.shutdown(error, restart);
 
         this.pluginCache = {};
@@ -425,6 +433,7 @@ export class NodeCoreClient extends NodeCoreBase {
         if (this.emit('client-init', { payload })) return;
 
         this.sendCommand(0, 0, Guid.EMPTY, payload);
+        this.resetTimeout();
     }
 
     protected onPacket(packet: crypto.NodeCorePacket) {
@@ -438,16 +447,15 @@ export class NodeCoreClient extends NodeCoreBase {
                 break;
 
             case 2:
-                // Don't know what this means / how to implement
+                // File transfer command (WIP)
                 break;
         }
     }
 
     private onServerCommand(packet: crypto.NodeCorePacket) {
         switch (packet.UpperCommand) {
+            // Create pipe
             case 2:
-                // Create pipe
-
                 const pipeInfo = {
                     name: <string>packet.Payload[0],
                     guid: (<PGuid>packet.Payload[1]).value,
@@ -477,12 +485,13 @@ export class NodeCoreClient extends NodeCoreBase {
                     this.emit('pipe.dead', {...pipeInfo, error: e.error}, false);
                 });
 
-                client.connect(this.clientOptions.timeout);
+                client.connect(this.clientOptions.connectTimeout);
 
                 this.pipes[pipeInfo.name] = client;
 
                 break;
 
+            // Plugin command
             case 4:
                 const plugin = PLUGINS[packet.Guid.toString()];
                 if (!plugin) {
@@ -495,8 +504,11 @@ export class NodeCoreClient extends NodeCoreBase {
 
                 break;
 
+            // Reset timeout
             case 6:
                 this.sendCommand(0, 6, Guid.EMPTY, []);
+                this.resetTimeout();
+                break;
         }
     }
 
@@ -505,19 +517,24 @@ export class NodeCoreClient extends NodeCoreBase {
             case 0:
                 this.sendCommand(1, 0, Guid.EMPTY, [true]);
                 break;
+
             case 1:
                 this.sendCommand(1, 1, Guid.EMPTY, []);
                 break;
+
             case 2:
                 const guids: PGuid[] = [];
 
-                for (var i = 0; i < packet.Payload.length; i+=3) {
-                    guids.push(<PGuid>packet.Payload[i]);
+                if (this.clientOptions.requestPluginBinaries) {
+                    for (var i = 0; i < packet.Payload.length; i+=3) {
+                        guids.push(<PGuid>packet.Payload[i]);
+                    }
                 }
 
                 this.sendCommand(1, 2, Guid.EMPTY, guids);
 
                 break;
+
             case 3:
                 for (var i = 0; i < packet.Payload.length; i+=5) {
                     this.pluginCache[((<PGuid>packet.Payload[i]).value).toString()] = {
@@ -532,6 +549,15 @@ export class NodeCoreClient extends NodeCoreBase {
                 this.sendCommand(1, 3, Guid.EMPTY, []);
                 break;
         }
+    }
+
+    private resetTimeout()
+    {
+        clearTimeout(this.disconnectTimeout);
+
+        this.disconnectTimeout = setTimeout(() => {
+            this.socket.destroy(new Error('No data received within KeepAliveTimeout'));
+        }, this.clientOptions.keepAliveTimeout);
     }
 }
 
@@ -562,7 +588,7 @@ export class NodeCorePipe extends NodeCoreBase {
      * This won't restart the connection because pipes don't support it
      */
     public restart() {
-        this.shutdown(false, false);
+        this.shutdown(undefined, false);
     }
 
     protected onSocketConnect() {
