@@ -281,6 +281,8 @@ export class NodeCoreBase extends EventEmitter {
     }
 
     protected onSocketConnect() {
+        this.socket.setTimeout(0);
+
         this.emit('connect', {
             hostname: this.hostname, 
             port: this.port
