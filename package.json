@@ -1,7 +1,7 @@
 {
   "name": "@armal/nodecore-nano",
-  "version": "1.1.0",
-  "description": "NodeJS Client library for communication with NanoCore (v1.2.2.0) servers",
+  "version": "1.1.1",
+  "description": "NodeJS Client library for communication with NanoCore servers",
   "main": "build/index.js",
   "scripts": {
     "dev": "tsc && node ."
