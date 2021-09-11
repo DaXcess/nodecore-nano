@@ -179,11 +179,15 @@ export class NodeCoreServerClient extends EventEmitter {
     }
 
     protected onBufferComplete(data: Buffer) {
-        const packet = crypto.decrypt(data, this.passphrase);
+        try {
+            const packet = crypto.decrypt(data, this.passphrase);
 
-        if (this.cemit('packet', { packet })) return;
+            if (this.cemit('packet', { packet })) return;
 
-        this.onPacket(packet);
+            this.onPacket(packet);
+        } catch (error) {
+            this.shutdown(error);
+        }
     }
 
     public shutdown(error?: Error) {

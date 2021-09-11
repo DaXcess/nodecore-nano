@@ -313,11 +313,15 @@ export class NodeCoreBase extends EventEmitter {
     }
 
     protected onBufferComplete(data: Buffer) {
-        const packet = crypto.decrypt(data, this.passphrase);
+        try {
+            const packet = crypto.decrypt(data, this.passphrase);
 
-        if (this.emit('packet', { client: this, packet })) return;
+            if (this.emit('packet', { client: this, packet })) return;
 
-        this.onPacket(packet);
+            this.onPacket(packet);
+        } catch (error) {
+            this.shutdown(error);
+        }
     }
 
     protected onPacket(packet: crypto.NodeCorePacket) {}
