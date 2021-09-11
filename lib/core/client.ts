@@ -10,7 +10,7 @@ import { PLUGINS } from '../plugins';
 export declare interface NodeCoreBase {
     // Main events
     on(event: 'connect', listener: (eventArgs: {hostname: string, port: number}) => void): this;
-    on(event: 'shutdown', listener: (eventArgs: {error: boolean, restart: boolean, cancel(): void, isCancelled(): boolean}) => void): this;
+    on(event: 'shutdown', listener: (eventArgs: {error: Error, restart: boolean, cancel(): void, isCancelled(): boolean}) => void): this;
     on(event: 'packet', listener: (eventArgs: {client: NodeCoreBase, packet: crypto.NodeCorePacket, cancel(): void, isCancelled(): boolean}) => void): this;
     on(event: 'packet.unhandled', listener: (eventArgs: {client: NodeCoreBase, packet: crypto.NodeCorePacket}) => void): this;
     on(event: 'client-init', listener: (eventArgs: {payload: PayloadLike[], cancel(): void, isCancelled(): boolean}) => void): this;
@@ -58,7 +58,7 @@ export declare interface NodeCoreBase {
 export declare interface NodeCoreBase {
     // Main events
     once(event: 'connect', listener: (eventArgs: {hostname: string, port: number}) => void): this;
-    once(event: 'shutdown', listener: (eventArgs: {error: boolean, restart: boolean, cancel(): void, isCancelled(): boolean}) => void): this;
+    once(event: 'shutdown', listener: (eventArgs: {error: Error, restart: boolean, cancel(): void, isCancelled(): boolean}) => void): this;
     once(event: 'packet', listener: (eventArgs: {client: NodeCoreBase, packet: crypto.NodeCorePacket, cancel(): void, isCancelled(): boolean}) => void): this;
     once(event: 'packet.unhandled', listener: (eventArgs: {client: NodeCoreBase, packet: crypto.NodeCorePacket}) => void): this;
     once(event: 'client-init', listener: (eventArgs: {payload: PayloadLike[], cancel(): void, isCancelled(): boolean}) => void): this;
@@ -106,7 +106,7 @@ export declare interface NodeCoreBase {
 export declare interface NodeCoreBase {
     // Main events
     off(event: 'connect', listener?: (eventArgs: {hostname: string, port: number}) => void): this;
-    off(event: 'shutdown', listener?: (eventArgs: {error: boolean, restart: boolean, cancel(): void, isCancelled(): boolean}) => void): this;
+    off(event: 'shutdown', listener?: (eventArgs: {error: Error, restart: boolean, cancel(): void, isCancelled(): boolean}) => void): this;
     off(event: 'packet', listener?: (eventArgs: {client: NodeCoreBase, packet: crypto.NodeCorePacket, cancel(): void, isCancelled(): boolean}) => void): this;
     off(event: 'packet.unhandled', listener?: (eventArgs: {client: NodeCoreBase, packet: crypto.NodeCorePacket}) => void): this;
     off(event: 'client-init', listener: (eventArgs: {payload: PayloadLike[], cancel(): void, isCancelled(): boolean}) => void): this;
@@ -157,15 +157,17 @@ interface NodeCoreClientConstructorOptions {
     deviceName?: string;
     deviceGuid?: Guid;
     groupName?: string;
-    requestPluginBinaries?: boolean;
+    requestPlugins?: boolean;
     connectTimeout?: number;
     keepAliveTimeout?: number;
+    passphrase?: Buffer
 }
 
 interface NodeCorePipeConstructorOptions {
     hostname: string;
     port: number;
-    
+    passphrase: Buffer;
+
     guid: Guid;
     name: string;
     plugin: Guid;
@@ -198,7 +200,7 @@ export class NodeCoreBase extends EventEmitter {
 
     protected isConnected = false;
 
-    constructor(protected hostname: string, protected port: number) {
+    constructor(protected hostname: string, protected port: number, protected passphrase: Buffer) {
         super();
 
         this.connect = this.connect.bind(this);
@@ -267,7 +269,7 @@ export class NodeCoreBase extends EventEmitter {
      * @param payload The payload to send
      */
     public sendCommand(command: number, byte: number, guid: Guid, payload: PayloadLike[]) {
-        const buffer = crypto.encrypt(true, command, byte, guid, payload);
+        const buffer = crypto.encrypt(true, command, byte, guid, payload, this.passphrase);
 
         const arr = Buffer.from([
             (buffer.length & 0x000000ff),
@@ -311,7 +313,7 @@ export class NodeCoreBase extends EventEmitter {
     }
 
     protected onBufferComplete(data: Buffer) {
-        const packet = crypto.decrypt(data);
+        const packet = crypto.decrypt(data, this.passphrase);
 
         if (this.emit('packet', { client: this, packet })) return;
 
@@ -367,14 +369,14 @@ export class NodeCoreClient extends NodeCoreBase {
      * @param opts
      */
     constructor(opts: NodeCoreClientConstructorOptions) {
-        super(opts.hostname, opts.port);
+        super(opts.hostname, opts.port, opts.passphrase || Buffer.from([114, 32, 24, 120, 140, 41, 72, 151]));
 
         this.clientOptions = {
             username: opts.username ?? "John",
             deviceName: opts.deviceName ?? "JOHN-PC",
             groupName: opts.groupName ?? "Default",
             deviceGuid: opts.deviceGuid ?? new Guid(...randomBytes(16)),
-            requestPluginBinaries: opts.requestPluginBinaries ?? false,
+            requestPluginBinaries: opts.requestPlugins ?? false,
             connectTimeout: opts.connectTimeout ?? 3e4,
             keepAliveTimeout: opts.keepAliveTimeout ?? 3e4
         };
@@ -475,6 +477,7 @@ export class NodeCoreClient extends NodeCoreBase {
                 const client = new NodeCorePipe({
                     hostname: this.hostname,
                     port: this.port,
+                    passphrase: this.passphrase,
                     guid: pipeInfo.guid,
                     name: pipeInfo.name,
                     plugin: pipeInfo.plugin,
@@ -570,7 +573,7 @@ export class NodeCorePipe extends NodeCoreBase {
     public parent: NodeCoreClient;
     
     constructor(opts: NodeCorePipeConstructorOptions) {
-        super(opts.hostname, opts.port);
+        super(opts.hostname, opts.port, opts.passphrase);
 
         this.guid = opts.guid;
         this.name = opts.name;

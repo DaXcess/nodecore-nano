@@ -56,7 +56,8 @@ export function encrypt(
   command: number,
   byte: number,
   guid: Guid,
-  payload?: PayloadLike[]
+  payload: PayloadLike[] | undefined,
+  passphrase: Buffer
 ): Buffer {
   const writer = new BinaryWriter();
 
@@ -260,9 +261,7 @@ export function encrypt(
     byteArray[0] = 0;
   }
 
-  const key = Buffer.from([114, 32, 24, 120, 140, 41, 72, 151]);
-  const iv = Buffer.from([114, 32, 24, 120, 140, 41, 72, 151]);
-  const cipher = crypto.createCipheriv("des-cbc", key, iv);
+  const cipher = crypto.createCipheriv("des-cbc", passphrase, passphrase);
 
   let encrypted = Buffer.concat([cipher.update(byteArray), cipher.final()]);
   writer.writeBytes(encrypted);
@@ -277,10 +276,8 @@ export interface NodeCorePacket {
   Payload: PayloadLike[];
 }
 
-export function decrypt(byteArray: Buffer): NodeCorePacket {
-  const key = Buffer.from([114, 32, 24, 120, 140, 41, 72, 151]);
-  const iv = Buffer.from([114, 32, 24, 120, 140, 41, 72, 151]);
-  const cipher = crypto.createDecipheriv("des-cbc", key, iv);
+export function decrypt(byteArray: Buffer, passphrase: Buffer): NodeCorePacket {
+  const cipher = crypto.createDecipheriv("des-cbc", passphrase, passphrase);
 
   let buffer = cipher.update(byteArray);
   buffer = Buffer.concat([buffer, cipher.final()]);

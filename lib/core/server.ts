@@ -39,6 +39,9 @@ export declare interface NodeCoreServer {
     off(event: string | symbol, listener?: Function): this;
 }
 
+interface NodeCoreServerContructorProps {
+    passphrase?: Buffer;
+}
 
 /**
  * Core Server class of this library
@@ -52,8 +55,12 @@ export class NodeCoreServer extends EventEmitter {
     protected maxClientCount = 10000;
     protected maxPacketSize = 10485760;
 
-    constructor() {
+    protected passphrase: Buffer;
+
+    constructor(props?: NodeCoreServerContructorProps) {
         super();
+
+        this.passphrase = props?.passphrase || Buffer.from([114, 32, 24, 120, 140, 41, 72, 151]);
     }
 
     /**
@@ -66,7 +73,7 @@ export class NodeCoreServer extends EventEmitter {
 
         this.server = createServer((socket) => {
             if (this.clientList.length < this.maxClientCount) {
-                const client = new NodeCoreServerClient(socket, this.maxPacketSize);
+                const client = new NodeCoreServerClient(socket, this.maxPacketSize, this.passphrase);
 
                 if (this.emit('client_connect', {client})) {
                     socket.destroy();
@@ -75,8 +82,7 @@ export class NodeCoreServer extends EventEmitter {
 
                 this.clientList.push(client);
 
-                client.on('close', (had_error: boolean) => this.onClientClosed(client, had_error));
-                client.on('buffer', (buffer: Buffer) => this.onBufferComplete(client, buffer));
+                client.on('close', (error: Error) => this.onClientClosed(client, error));
             }
         });
 
@@ -85,21 +91,9 @@ export class NodeCoreServer extends EventEmitter {
         });
     }
 
-    protected onClientClosed(client: NodeCoreServerClient, had_error: boolean) {
-        this.emit('client_closed', { client, had_error }, false);
+    protected onClientClosed(client: NodeCoreServerClient, error: Error) {
+        this.emit('client_closed', { client, error }, false);
         this.clientList.splice(this.clientList.indexOf(client), 1);
-    }
-
-    protected onBufferComplete(client: NodeCoreServerClient, data: Buffer) {
-        const packet = crypto.decrypt(data);
-
-        if (this.emit('packet', { client, packet })) return;
-
-        this.onPacket(client, packet);
-    }
-
-    protected onPacket(client: NodeCoreServerClient, packet: crypto.NodeCorePacket) {
-
     }
 
     public emit(event: string | symbol, arg: object, cancellable: boolean = true): boolean {
@@ -138,16 +132,17 @@ export class NodeCoreServer extends EventEmitter {
     }
 }
 
-export class NodeCoreServerClient extends EventEmitter {
+class NodeCoreServerClient extends EventEmitter {
     protected bufferState: {buffer: Buffer, bufferWritten: number} = {buffer: null, bufferWritten: 0};
 
     public storage: Map<string, any> = new Map<string, any>();
 
-    constructor(public socket: Socket, protected maxPacketSize: number) {
+    constructor(public socket: Socket, protected maxPacketSize: number, protected passphrase: Buffer) {
         super();
 
         this.onDataReceived = this.onDataReceived.bind(this);
         this.onSocketError = this.onSocketError.bind(this);
+        this.onBufferComplete = this.onBufferComplete.bind(this);
 
         this.socket.on('data', this.onDataReceived);
         this.socket.on('error', this.onSocketError)
@@ -157,50 +152,42 @@ export class NodeCoreServerClient extends EventEmitter {
         if (!this.bufferState.buffer) {
             const size = data.readInt32LE();
 
-            if (size < 0) return this.shutdown(true);
+            if (size < 0) return this.shutdown(new Error('Size is less than 0'));
+            if (size > this.maxPacketSize) return this.shutdown(new Error('Maximum packet size exceeded'));
 
             this.bufferState.buffer = Buffer.alloc(size);
             data.copy(this.bufferState.buffer, 0, 4);
             this.bufferState.bufferWritten = data.length - 4;
-
-            if (this.bufferState.bufferWritten > this.maxPacketSize) {
-                this.bufferState.buffer = null;
-                this.emit('error', {message: 'maxPacketSize exceeded'});
-
-                return;
-            }
         } else {
             data.copy(this.bufferState.buffer, this.bufferState.bufferWritten);
             this.bufferState.bufferWritten += data.length;
-
-            if (this.bufferState.bufferWritten > this.maxPacketSize) {
-                this.bufferState.buffer = null;
-                this.emit('error', {message: 'maxPacketSize exceeded'});
-
-                return;
-            }
         }
 
         if (this.bufferState.bufferWritten < this.bufferState.buffer.length) return;
 
-        const buffer = this.bufferState.buffer;
-        this.bufferState.buffer = null;
-
-        this.emit('buffer', buffer);
+        this.onBufferComplete(this.bufferState.buffer);
 
         this.bufferState.buffer = null;
     }
 
-    protected onSocketClose(had_error: boolean) {
-        this.emit('close', had_error);
+    protected onSocketClose(error?: Error) {
+        this.emit('close', error);
     }
 
-    protected onSocketError() {
-        this.shutdown(true);
+    protected onSocketError(error: Error) {
+        this.shutdown(error);
     }
 
-    public shutdown(had_error: boolean) {
-        this.emit('shutdown', {error: had_error});
+    protected onBufferComplete(data: Buffer) {
+        const packet = crypto.decrypt(data, this.passphrase);
+
+        if (this.cemit('packet', { packet })) return;
+
+        this.onPacket(packet);
+    }
+
+    public shutdown(error?: Error) {
+        this.emit('shutdown', { error });
         
         this.socket.destroy();
     }
@@ -214,7 +201,7 @@ export class NodeCoreServerClient extends EventEmitter {
      * @param payload The payload to send
      */
     public sendCommand(command: number, byte: number, guid: Guid, payload: PayloadLike[]) {
-        const buffer = crypto.encrypt(true, command, byte, guid, payload);
+        const buffer = crypto.encrypt(true, command, byte, guid, payload, this.passphrase);
 
         const arr = Buffer.from([
             (buffer.length & 0x000000ff),
@@ -225,5 +212,45 @@ export class NodeCoreServerClient extends EventEmitter {
 
         this.socket.write(arr);
         this.socket.write(buffer);
+    }
+
+    public onPacket(packet: crypto.NodeCorePacket) {
+    
+        // WIP: Handle packet
+    }
+
+    public cemit(event: string | symbol, arg: any, cancellable: boolean = true): boolean {
+        var cancelled = false;
+        
+        if (cancellable) {
+            if (arg) {
+                super.emit(event, {
+                    ...arg,
+                    cancel: () => {
+                        cancelled = true
+                    },
+                    isCancelled: () => cancelled
+                });
+            } else {
+                super.emit(event, {
+                    cancel: () => {
+                        cancelled = true
+                    },
+                    isCancelled: () => cancelled
+                });
+            }
+        } else {
+            if (arg) super.emit(event, arg);
+            else super.emit(event);
+        }
+
+        return cancellable && cancelled;
+    }
+
+    public off(event: string | symbol, listener?: (...args: any[]) => void): this {
+        if (event === '*') event = undefined;
+
+        if (listener) return super.off(event, listener);
+        else return super.removeAllListeners(event);
     }
 }
