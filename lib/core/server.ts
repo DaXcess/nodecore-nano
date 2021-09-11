@@ -132,7 +132,7 @@ export class NodeCoreServer extends EventEmitter {
     }
 }
 
-class NodeCoreServerClient extends EventEmitter {
+export class NodeCoreServerClient extends EventEmitter {
     protected bufferState: {buffer: Buffer, bufferWritten: number} = {buffer: null, bufferWritten: 0};
 
     public storage: Map<string, any> = new Map<string, any>();
