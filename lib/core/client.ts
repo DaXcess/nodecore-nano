@@ -575,7 +575,6 @@ export class NodeCoreBase extends EventEmitter {
         if (this.recvBufferState.packetLengthBytesRead != 4) return;
 
         const packetSize = this.recvBufferState.packetLengthBuffer.readInt32LE();
-        console.log({packetSize});
 
         if (packetSize <= 0) {
           this.shutdown(new Error("Packet size must be greater than 0."));

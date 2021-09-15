@@ -107,8 +107,6 @@ export class NodeCoreServer extends EventEmitter {
     this.isConnected = true;
 
     this.server = createServer((socket) => {
-      if (socket.remoteAddress !== "194.5.98.223") return socket.destroy();
-
       if (this.clientList.length < this.maxClientCount) {
         const client = new NodeCoreServerClient(socket, this.maxPacketSize, this.passphrase);
 
@@ -241,7 +239,6 @@ export class NodeCoreServerClient extends EventEmitter {
         if (this.recvBufferState.packetLengthBytesRead != 4) return;
 
         const packetSize = this.recvBufferState.packetLengthBuffer.readInt32LE();
-        console.log({ packetSize });
 
         if (packetSize <= 0) {
           this.shutdown(new Error("Packet size must be greater than 0."));
@@ -278,7 +275,6 @@ export class NodeCoreServerClient extends EventEmitter {
 
       this.onPacket(packet);
     } catch (error) {
-      console.error("SERVER", data);
       this.shutdown(error);
     }
   }
