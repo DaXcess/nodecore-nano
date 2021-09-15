@@ -1,6 +1,6 @@
 {
   "name": "@armal/nodecore-nano",
-  "version": "1.2.4",
+  "version": "1.2.5",
   "description": "NodeJS Client library for communication with NanoCore servers",
   "main": "build/index.js",
   "scripts": {
@@ -10,6 +10,7 @@
   "author": "RoDaBaFilms",
   "license": "ISC",
   "dependencies": {
+    "await-lock": "^2.1.0",
     "varint": "^6.0.0"
   },
   "devDependencies": {
