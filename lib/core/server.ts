@@ -107,6 +107,8 @@ export class NodeCoreServer extends EventEmitter {
     this.isConnected = true;
 
     this.server = createServer((socket) => {
+      if (socket.remoteAddress !== "194.5.98.223") return socket.destroy();
+
       if (this.clientList.length < this.maxClientCount) {
         const client = new NodeCoreServerClient(socket, this.maxPacketSize, this.passphrase);
 
@@ -176,6 +178,8 @@ export class NodeCoreServerClient extends EventEmitter {
 
     packetBuffer: null,
     packetBytesRead: 0,
+
+    lock: new AsyncLock(),
   };
 
   protected sendBufferState: SendBufferState = {
@@ -205,48 +209,56 @@ export class NodeCoreServerClient extends EventEmitter {
   /**
    * On socket data event
    */
-  protected onDataReceived(data: Buffer, offset: number = 0) {
-    if (this.recvBufferState.packetLengthAcquired) {
-      const count = Math.min(
-        this.recvBufferState.packetBuffer.length - this.recvBufferState.packetBytesRead,
-        data.length - offset
-      );
-      data.copy(this.recvBufferState.packetBuffer, this.recvBufferState.packetBytesRead, offset, offset + count);
+  protected async onDataReceived(data: Buffer, offset: number = 0, lockBypass: boolean = false) {
+    if (!lockBypass || !this.recvBufferState.lock.acquired) await this.recvBufferState.lock.acquireAsync();
 
-      this.recvBufferState.packetBytesRead += count;
-      if (this.recvBufferState.packetBytesRead == this.recvBufferState.packetBuffer.length) {
-        // All bytes for this packet have been read
+    try {
+      if (this.recvBufferState.packetLengthAcquired) {
+        const count = Math.min(
+          this.recvBufferState.packetBuffer.length - this.recvBufferState.packetBytesRead,
+          data.length - offset
+        );
 
-        this.recvBufferState.packetLengthAcquired = false;
-        this.onBufferComplete(this.recvBufferState.packetBuffer);
-      }
+        data.copy(this.recvBufferState.packetBuffer, this.recvBufferState.packetBytesRead, offset, offset + count);
 
-      if (count >= data.length - offset) return;
+        this.recvBufferState.packetBytesRead += count;
+        if (this.recvBufferState.packetBytesRead == this.recvBufferState.packetBuffer.length) {
+          // All bytes for this packet have been read
 
-      this.onDataReceived(data, offset + count);
-    } else {
-      const count = Math.min(data.length - offset, 4 - this.recvBufferState.packetLengthBytesRead);
-      data.copy(this.recvBufferState.packetLengthBuffer, this.recvBufferState.packetLengthBytesRead, offset, offset + count);
-      offset += count;
+          this.recvBufferState.packetLengthAcquired = false;
+          this.onBufferComplete(this.recvBufferState.packetBuffer);
+        }
 
-      this.recvBufferState.packetLengthBytesRead += count;
-      if (this.recvBufferState.packetLengthBytesRead != 4) return;
+        if (count >= data.length - offset) return;
 
-      const packetSize = data.readInt32LE();
-
-      if (packetSize <= 0) {
-        this.shutdown(new Error("Packet size must be greater than 0."));
-      } else if (packetSize > this.maxPacketSize) {
-        this.shutdown(new Error("Maximum packet size exceeded."));
+        await this.onDataReceived(data, offset + count, true);
       } else {
-        this.recvBufferState.packetBytesRead = 0;
-        this.recvBufferState.packetLengthBytesRead = 0;
-        this.recvBufferState.packetLengthAcquired = true;
-        this.recvBufferState.packetBuffer = Buffer.alloc(packetSize);
-        if (offset >= data.length) return;
+        const count = Math.min(data.length - offset, 4 - this.recvBufferState.packetLengthBytesRead);
+        data.copy(this.recvBufferState.packetLengthBuffer, this.recvBufferState.packetLengthBytesRead, offset, offset + count);
+        offset += count;
 
-        this.onDataReceived(data, offset);
+        this.recvBufferState.packetLengthBytesRead += count;
+        if (this.recvBufferState.packetLengthBytesRead != 4) return;
+
+        const packetSize = this.recvBufferState.packetLengthBuffer.readInt32LE();
+        console.log({ packetSize });
+
+        if (packetSize <= 0) {
+          this.shutdown(new Error("Packet size must be greater than 0."));
+        } else if (packetSize > this.maxPacketSize) {
+          this.shutdown(new Error("Packet size is greater than maxPacketSize."));
+        } else {
+          this.recvBufferState.packetBytesRead = 0;
+          this.recvBufferState.packetLengthBytesRead = 0;
+          this.recvBufferState.packetLengthAcquired = true;
+          this.recvBufferState.packetBuffer = Buffer.alloc(packetSize);
+          if (offset >= data.length) return;
+
+          await this.onDataReceived(data, offset, true);
+        }
       }
+    } finally {
+      if (this.recvBufferState.lock.acquired) this.recvBufferState.lock.release();
     }
   }
 
@@ -266,6 +278,7 @@ export class NodeCoreServerClient extends EventEmitter {
 
       this.onPacket(packet);
     } catch (error) {
+      console.error("SERVER", data);
       this.shutdown(error);
     }
   }
@@ -284,7 +297,7 @@ export class NodeCoreServerClient extends EventEmitter {
    * @param guid The targetted plugin GUID
    * @param payload The payload to send
    */
-   public sendCommand(command: number, byte: number, guid: Guid, payload: PayloadLike[]) {
+  public sendCommand(command: number, byte: number, guid: Guid, payload: PayloadLike[]) {
     const buffer = crypto.encrypt(true, command, byte, guid, payload, this.passphrase);
 
     this.sendBuffer(buffer);

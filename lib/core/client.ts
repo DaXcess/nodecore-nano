@@ -349,12 +349,14 @@ export class NodeCoreBase extends EventEmitter {
 
   protected recvBufferState: ReadBufferState = {
     packetLengthAcquired: false,
-    
+
     packetLengthBytesRead: 0,
     packetLengthBuffer: Buffer.alloc(4),
 
     packetBuffer: null,
     packetBytesRead: 0,
+
+    lock: new AsyncLock(),
   };
 
   protected sendBufferState: SendBufferState = {
@@ -540,46 +542,55 @@ export class NodeCoreBase extends EventEmitter {
   /**
    * On socket data event
    */
-  protected onDataReceived(data: Buffer, offset: number = 0) {
-    if (this.recvBufferState.packetLengthAcquired) {
-      const count = Math.min(
-        this.recvBufferState.packetBuffer.length - this.recvBufferState.packetBytesRead,
-        data.length - offset
-      );
-      data.copy(this.recvBufferState.packetBuffer, this.recvBufferState.packetBytesRead, offset, offset + count);
+  protected async onDataReceived(data: Buffer, offset: number = 0, lockBypass: boolean = false) {
+    if (!lockBypass || !this.recvBufferState.lock.acquired)
+      await this.recvBufferState.lock.acquireAsync();
 
-      this.recvBufferState.packetBytesRead += count;
-      if (this.recvBufferState.packetBytesRead == this.recvBufferState.packetBuffer.length) {
-        // All bytes for this packet have been read
+    try {
+      if (this.recvBufferState.packetLengthAcquired) {
+        const count = Math.min(
+          this.recvBufferState.packetBuffer.length - this.recvBufferState.packetBytesRead,
+          data.length - offset
+        );
 
-        this.recvBufferState.packetLengthAcquired = false;
-        this.onBufferComplete(this.recvBufferState.packetBuffer);
-      }
+        data.copy(this.recvBufferState.packetBuffer, this.recvBufferState.packetBytesRead, offset, offset + count);
 
-      if (count >= data.length - offset) return;
+        this.recvBufferState.packetBytesRead += count;
+        if (this.recvBufferState.packetBytesRead == this.recvBufferState.packetBuffer.length) {
+          // All bytes for this packet have been read
 
-      this.onDataReceived(data, offset + count);
-    } else {
-      const count = Math.min(data.length - offset, 4 - this.recvBufferState.packetLengthBytesRead);
-      data.copy(this.recvBufferState.packetLengthBuffer, this.recvBufferState.packetLengthBytesRead, offset, offset + count);
-      offset += count;
+          this.recvBufferState.packetLengthAcquired = false;
+          this.onBufferComplete(this.recvBufferState.packetBuffer);
+        }
 
-      this.recvBufferState.packetLengthBytesRead += count;
-      if (this.recvBufferState.packetLengthBytesRead != 4) return;
+        if (count >= data.length - offset) return;
 
-      const packetSize = data.readInt32LE();
-
-      if (packetSize <= 0) {
-        this.shutdown(new Error("Packet size must be greater than 0."));
+        await this.onDataReceived(data, offset + count, true);
       } else {
-        this.recvBufferState.packetBytesRead = 0;
-        this.recvBufferState.packetLengthBytesRead = 0;
-        this.recvBufferState.packetLengthAcquired = true;
-        this.recvBufferState.packetBuffer = Buffer.alloc(packetSize);
-        if (offset >= data.length) return;
+        const count = Math.min(data.length - offset, 4 - this.recvBufferState.packetLengthBytesRead);
+        data.copy(this.recvBufferState.packetLengthBuffer, this.recvBufferState.packetLengthBytesRead, offset, offset + count);
+        offset += count;
 
-        this.onDataReceived(data, offset);
+        this.recvBufferState.packetLengthBytesRead += count;
+        if (this.recvBufferState.packetLengthBytesRead != 4) return;
+
+        const packetSize = this.recvBufferState.packetLengthBuffer.readInt32LE();
+        console.log({packetSize});
+
+        if (packetSize <= 0) {
+          this.shutdown(new Error("Packet size must be greater than 0."));
+        } else {
+          this.recvBufferState.packetBytesRead = 0;
+          this.recvBufferState.packetLengthBytesRead = 0;
+          this.recvBufferState.packetLengthAcquired = true;
+          this.recvBufferState.packetBuffer = Buffer.alloc(packetSize);
+          if (offset >= data.length) return;
+
+          await this.onDataReceived(data, offset, true);
+        }
       }
+    } finally {
+      if (this.recvBufferState.lock.acquired) this.recvBufferState.lock.release();
     }
   }
 
@@ -594,7 +605,6 @@ export class NodeCoreBase extends EventEmitter {
 
       this.onPacket(packet);
     } catch (error) {
-      console.log(data);
       this.shutdown(error);
     }
   }

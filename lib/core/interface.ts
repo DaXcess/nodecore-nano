@@ -11,7 +11,7 @@ export interface SendBufferState {
   lock: AsyncLock;
 }
 
-export interface ReadBufferState {
+export interface ReadBufferState {  
   packetLengthAcquired: boolean;
   
   packetLengthBytesRead: number;
@@ -19,4 +19,6 @@ export interface ReadBufferState {
 
   packetBuffer: Buffer;
   packetBytesRead: number;
+
+  lock: AsyncLock;
 }
