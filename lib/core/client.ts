@@ -297,6 +297,10 @@ export class NodeCoreBase extends EventEmitter {
 
     protected onDataReceived(data: Buffer) {
         if (!this.bufferState.buffer) {
+            const size = data.readInt32LE();
+
+            if (size < 0) return;
+
             this.bufferState.buffer = Buffer.alloc(data.readInt32LE());
             data.copy(this.bufferState.buffer, 0, 4);
             this.bufferState.bufferWritten = data.length - 4;

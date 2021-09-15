@@ -152,8 +152,8 @@ export class NodeCoreServerClient extends EventEmitter {
         if (!this.bufferState.buffer) {
             const size = data.readInt32LE();
 
-            if (size < 0) return this.shutdown(new Error('Size is less than 0'));
-            if (size > this.maxPacketSize) return this.shutdown(new Error('Maximum packet size exceeded'));
+            if (size < 0) return; //this.shutdown(new Error('Size is less than 0'));
+            if (size > this.maxPacketSize) return; //this.shutdown(new Error('Maximum packet size exceeded'));
 
             this.bufferState.buffer = Buffer.alloc(size);
             data.copy(this.bufferState.buffer, 0, 4);
