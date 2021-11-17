@@ -339,6 +339,7 @@ interface NodeCorePlugin {
   guid: Guid;
   buildTime: Date;
   size: number;
+  buffer: Buffer;
 }
 
 /**
@@ -836,6 +837,7 @@ export class NodeCoreClient extends NodeCoreBase {
             buildTime: (<PDateTime>packet.Payload[i + 1]).value,
             size: (<byte[]>packet.Payload[i + 4]).length,
             name: <string>packet.Payload[i + 2],
+            buffer: Buffer.from((<byte[]>packet.Payload[i + 4]).map((b) => b.value)),
           };
         }
 
