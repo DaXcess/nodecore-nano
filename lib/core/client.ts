@@ -543,8 +543,7 @@ export class NodeCoreBase extends EventEmitter {
    * On socket data event
    */
   protected async onDataReceived(data: Buffer, offset: number = 0, lockBypass: boolean = false) {
-    if (!lockBypass || !this.recvBufferState.lock.acquired)
-      await this.recvBufferState.lock.acquireAsync();
+    if (!lockBypass || !this.recvBufferState.lock.acquired) await this.recvBufferState.lock.acquireAsync();
 
     try {
       if (this.recvBufferState.packetLengthAcquired) {
@@ -700,6 +699,7 @@ export class NodeCoreClient extends NodeCoreBase {
   public shutdown(error?: Error, restart: boolean = false): boolean | void {
     const ret = super.shutdown(error, restart);
 
+    clearTimeout(this.disconnectTimeout);
     this.pluginCache = {};
 
     return ret;

@@ -4,7 +4,8 @@
   "description": "NodeJS Client library for communication with NanoCore servers",
   "main": "build/index.js",
   "scripts": {
-    "dev": "tsc && node ."
+    "dev": "tsc && node .",
+    "prepare": "tsc"
   },
   "keywords": [],
   "author": "RoDaBaFilms",
