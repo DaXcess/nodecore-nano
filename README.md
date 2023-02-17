@@ -3,17 +3,11 @@ A client library used to interface with NanoCore 1.2.2.0 servers
 | NOTE: This library is in early development, many features are still missing |
 | --- |
 
-## Installation
-Use npm to install the library
-```sh
-npm install --save @armal/nodecore-nano
-```
-
 ## Build from source
 Use git to pull the package and build using tsc
 
 ```sh
-git clone https://github.com/Armal-Malware-Research/nodecore-nano
+git clone https://github.com/DaXcess/nodecore-nano
 cd nodecore-nano 
 npm install
 npx tsc
