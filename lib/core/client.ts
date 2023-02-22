@@ -9,7 +9,7 @@ import AsyncLock from "await-lock";
 import { ReadBufferState, SendBufferState } from "./interface";
 
 // 'on' typings
-declare interface NodeCoreBase {
+export declare interface NodeCoreBase {
   // Main events
   on(event: "connect", listener: (eventArgs: { hostname: string; port: number }) => void): this;
   on(
@@ -109,7 +109,7 @@ declare interface NodeCoreBase {
 }
 
 // 'once' typings
-declare interface NodeCoreBase {
+export declare interface NodeCoreBase {
   // Main events
   once(event: "connect", listener: (eventArgs: { hostname: string; port: number }) => void): this;
   once(
@@ -205,7 +205,7 @@ declare interface NodeCoreBase {
 }
 
 // 'off' typings
-declare interface NodeCoreBase {
+export declare interface NodeCoreBase {
   // Main events
   off(event: "connect", listener?: (eventArgs: { hostname: string; port: number }) => void): this;
   off(
@@ -345,7 +345,7 @@ interface NodeCorePlugin {
 /**
  * Core class of this library
  */
-class NodeCoreBase extends EventEmitter {
+export class NodeCoreBase extends EventEmitter {
   protected socket: Socket;
 
   protected recvBufferState: ReadBufferState = {

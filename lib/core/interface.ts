@@ -1,4 +1,4 @@
-import AsyncLock from 'await-lock';
+import AsyncLock from "await-lock";
 
 export interface SendBufferState {
   queue: Buffer[];
@@ -11,9 +11,9 @@ export interface SendBufferState {
   lock: AsyncLock;
 }
 
-export interface ReadBufferState {  
+export interface ReadBufferState {
   packetLengthAcquired: boolean;
-  
+
   packetLengthBytesRead: number;
   packetLengthBuffer: Buffer;
 

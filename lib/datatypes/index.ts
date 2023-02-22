@@ -1,2 +1,2 @@
-export * from './common';
-export {Guid} from './guid';
+export * from "./common";
+export { Guid } from "./guid";

@@ -20,36 +20,36 @@ import {
 } from "../datatypes/common";
 import { Guid } from "../datatypes";
 
-const TYPES: {[key: string]: number} = {
-  'byte': 1,
-  'byte[]': 2,
-  'char': 3,
-  'char[]': 4,
-  'decimal': 5,
-  'double': 6,
-  'int': 7,
-  'int32': 7,
-  'long': 8,
-  'int64': 8,
-  'sbyte': 9,
-  'short': 10,
-  'int16': 10,
-  'float': 11,
-  'uint': 13,
-  'uint32': 13,
-  'ulong': 14,
-  'uint64': 14,
-  'ushort': 15,
-  'uint16': 15,
-  'DateTime': 16,
-  'PDateTime': 16,
-  'string[]': 17,
-  'Guid': 18,
-  'PGuid': 18,
-  'Size': 19,
-  'Rectangle': 20,
-  'Version': 21
-}
+const TYPES: { [key: string]: number } = {
+  byte: 1,
+  "byte[]": 2,
+  char: 3,
+  "char[]": 4,
+  decimal: 5,
+  double: 6,
+  int: 7,
+  int32: 7,
+  long: 8,
+  int64: 8,
+  sbyte: 9,
+  short: 10,
+  int16: 10,
+  float: 11,
+  uint: 13,
+  uint32: 13,
+  ulong: 14,
+  uint64: 14,
+  ushort: 15,
+  uint16: 15,
+  DateTime: 16,
+  PDateTime: 16,
+  "string[]": 17,
+  Guid: 18,
+  PGuid: 18,
+  Size: 19,
+  Rectangle: 20,
+  Version: 21,
+};
 
 export function encrypt(
   compress: boolean,
@@ -80,22 +80,11 @@ export function encrypt(
       let dataValue: any;
 
       if (Array.isArray(_data)) {
-        dataType =
-          typeof _data[0] === "string"
-            ? 17
-            : TYPES[`${_data[0].constructor.name}[]`];
+        dataType = typeof _data[0] === "string" ? 17 : TYPES[`${_data[0].constructor.name}[]`];
         dataValue = _data;
       } else {
-        dataType =
-          typeof _data === "string"
-            ? 12
-            : typeof _data === "boolean"
-            ? 0
-            : TYPES[_data.constructor.name];
-        dataValue =
-          typeof _data === "string" || typeof _data === "boolean"
-            ? _data
-            : _data.value;
+        dataType = typeof _data === "string" ? 12 : typeof _data === "boolean" ? 0 : TYPES[_data.constructor.name];
+        dataValue = typeof _data === "string" || typeof _data === "boolean" ? _data : _data.value;
       }
 
       if (dataType === undefined) {
@@ -127,9 +116,7 @@ export function encrypt(
         case 4:
           {
             const data: char[] = dataValue as char[];
-            writer.writeStringPrefixedUtf8(
-              data.map((v) => String.fromCharCode(v.value)).join("")
-            );
+            writer.writeStringPrefixedUtf8(data.map((v) => String.fromCharCode(v.value)).join(""));
           }
           break;
 
@@ -201,8 +188,7 @@ export function encrypt(
             const data: Date = dataValue as Date;
 
             // Get ms and convert to Ticks
-            const ticks: bigint =
-              BigInt(data.getTime()) * 10000n + 621355968000000000n;
+            const ticks: bigint = BigInt(data.getTime()) * 10000n + 621355968000000000n;
 
             // Write 8 byte-long tick value to buffer
             dateBuffer.writeBigInt64LE(ticks);
@@ -300,7 +286,7 @@ export function decrypt(byteArray: Buffer, passphrase: Buffer): NodeCorePacket {
     LowerCommand: reader.readByte(),
     UpperCommand: reader.readByte(),
     Guid: Guid.EMPTY,
-    Payload: []
+    Payload: [],
   };
 
   if (reader.readBoolean()) {
@@ -444,8 +430,7 @@ export function decrypt(byteArray: Buffer, passphrase: Buffer): NodeCorePacket {
           dateBytes[7] = parseInt(dateBytes[7].toString(2).substr(2), 2);
           const tmpBuf = Buffer.from(dateBytes);
 
-          const ms: bigint =
-            (tmpBuf.readBigInt64LE() - 621355968000000000n) / 10000n;
+          const ms: bigint = (tmpBuf.readBigInt64LE() - 621355968000000000n) / 10000n;
 
           const val = new Date(parseInt(ms.toString()));
           objectList.push(new PDateTime(val));
