@@ -96,4 +96,4 @@ export class PDateTime extends Payload<Date> {
   }
 }
 
-export type PayloadLike = Payload<any> | Payload<any>[] | string | string[] | boolean;
+export type PayloadLike = Payload<any> | Payload<any>[] | string | string[] | boolean | Uint8Array;

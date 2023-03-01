@@ -79,7 +79,10 @@ export function encrypt(
       let dataType: number;
       let dataValue: any;
 
-      if (Array.isArray(_data)) {
+      if (_data instanceof Uint8Array) {
+        dataType = TYPES["byte[]"];
+        dataValue = _data;
+      } else if (Array.isArray(_data)) {
         dataType = typeof _data[0] === "string" ? 17 : TYPES[`${_data[0].constructor.name}[]`];
         dataValue = _data;
       } else {
@@ -100,9 +103,9 @@ export function encrypt(
 
         case 2:
           {
-            const data: byte[] = dataValue as byte[];
+            const data: Uint8Array = dataValue as Uint8Array;
             writer.writeInt32(data.length);
-            writer.writeBytes(Buffer.from(data.map((v) => v.value as number)));
+            writer.writeBytes(Buffer.from(data));
           }
           break;
 
@@ -318,7 +321,7 @@ export function decrypt(byteArray: Buffer, passphrase: Buffer): NodeCorePacket {
         {
           // Byte[]
           const val = reader.readBytes(reader.readInt32());
-          objectList.push(Array.from(val).map((v) => new byte(v)));
+          objectList.push(val);
         }
         break;
 
